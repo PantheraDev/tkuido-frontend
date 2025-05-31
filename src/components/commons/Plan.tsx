@@ -20,8 +20,8 @@ const Plan = ({
     <div
       className={
         !destacado
-          ? "flex flex-col justify-betwee min-w-70 md:min-w-80 border border-[#2B7A57] rounded-xl p-6 shadow hover:scale-105 transition duration-300 "
-          : "flex flex-col justify-between min-w-70 md:min-w-80 border-4 border-[#2B7A57] rounded-xl p-6 shadow-lg hover:scale-105 transition duration-300 bg-[#f0fdf4] relative"
+          ? "flex flex-col justify-betwee w-70 md:min-w-80 border border-[#2B7A57] rounded-xl p-6 shadow hover:scale-105 transition duration-300 "
+          : "flex flex-col justify-between w-70 md:min-w-80 border-4 border-[#2B7A57] rounded-xl p-6 shadow-lg hover:scale-105 transition duration-300 bg-[#f0fdf4] relative"
       }
     >
       {destacado && (
@@ -51,8 +51,9 @@ const Plan = ({
           </li>
         ))}
       </ul>
-
-      <Button text="Contratar" />
+      <div className="h-full flex flex-col justify-end">
+        <Button text="Contratar" />
+      </div>
     </div>
   );
 };
