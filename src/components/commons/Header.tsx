@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Button from "../commons/Button";
 
 const Header = () => {
@@ -31,8 +32,8 @@ const Header = () => {
 
         {/* Desktop Buttons */}
         <div className="hidden lg:flex gap-2">
-          <Button text="Iniciar sesión" color="#2B7A57" />
-          <Button text="Regístrate" />
+          <Button text="Iniciar Sesión" link="/login" color="#2B7A57" />
+          <Button text="Regístrate" link="/registro" />
         </div>
 
         {/* Mobile menu toggle */}
@@ -81,12 +82,3 @@ const menu = [
   "Preguntas Frecuentes",
   "Contacto",
 ];
-
-// <!-- Script para toggle -->
-//   <script>
-//     const toggle = document.getElementById("menu-toggle");
-//     const menu = document.getElementById("mobile-menu");
-//     toggle.addEventListener("click", () => {
-//       menu.classList.toggle("hidden");
-//     });
-//   </script>

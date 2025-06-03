@@ -9,6 +9,10 @@ h1,h2,h3,p, button{
 body {
     background-color: #F5F5F5;
 }
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
 
 .resp-h1 {
   @apply text-4xl md:text-5xl lg:text-6xl 2xl:text-7xl;
