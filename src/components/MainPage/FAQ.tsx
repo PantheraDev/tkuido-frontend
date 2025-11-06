@@ -35,34 +35,28 @@ export default FAQ;
 
 const data = [
   {
-    question: "¿Qué es TKUIDO y qué servicios ofrece?",
+    question: "¿Qué tipos de protección ofrecen los planes de protección de TKUIDO?",
     answer:
-      "TKUIDO es una plataforma de salud que ofrece telemedicina 24/7 y un servicio funerario nacional integral para ti y tu familia.",
+      "Los microseguros son pólizas de seguro diseñadas específicamente para personas con recursos limitados. Son productos sencillos y asequibles que cubren riesgos básicos, como: ● Salud: Accidentes, Gastos médicos menores, hospitalización, maternidad. ● Funeraria: costo de los gastos de velación, cremación y entierro. ● Vida: Fallecimiento, invalidez. ● Propiedad: Pérdida o daño de bienes como vehículos, motos, locales, viviendas, y más. ● Desastres naturales: Terremotos, inundaciones, incendios y otros..",
   },
   {
-    question: "¿Cómo funciona la consulta médica en línea?",
+    question: "¿Por qué es importante estar Protegido por los microseguros de TKUIDO?",
     answer:
-      "Solo inicia sesión, elige el servicio médico y serás atendido por un profesional en tiempo real desde tu dispositivo.",
+      "●Protección Financiera: Permite a las personas protegerse ante eventos inesperados que podrían debilitar nuestra situación financiera y sumirnos en la pobreza. ●Reducción de la vulnerabilidad: Ayudan a las familias a hacer frente a pérdidas económicas y a mantener su estabilidad financiera y emocional. ●Fomento del desarrollo: Al reducir los riesgos, los microseguros pueden impulsar el desarrollo económico y social de las familias y sus comunidades.",
   },
   {
-    question: "¿Qué incluye el servicio funerario?",
+    question: "¿Cuáles son las principales características de los planes de Protección de TKuido?",
     answer:
-      "Incluye traslado, velorio, cremación o inhumación, apoyo documental y acompañamiento emocional para la familia.",
+      "●Productos Premium: Los productos de protección personal y familiar de TKuido son de primera calidad. Provistos por empresas con probada reputación y experiencia en cada ramo de protección. ●Bajos Costos (Primas bajas): Las primas suelen ser muy bajas y pueden pagarse en pequeñas cuotas. ●Distribución a través de redes existentes: Se distribuyen a través de nuestras aplicaciones Web y móvil, así como de nuestros agentes identificados y otras redes existentes. ●Productos sencillos: Los productos son fáciles de entender y se adaptan a las necesidades de la población.",
   },
   {
-    question: "¿Puedo registrar a otros miembros de mi familia?",
+    question: "¿Por qué comprar los productos de TKuido?",
     answer:
-      "Sí, puedes añadir beneficiarios según el plan contratado para que accedan tanto a los servicios médicos como funerarios.",
+      "Los productos de TKuido están diseñados para proteger a las personas de los riesgos de la vida diaria, reduciendo su vulnerabilidad y permitiendo su compra por parte de las poblaciones más desfavorecidas y de menor poder adquisitivo. Buscamos promover el desarrollo económico y social de nuestros clientes.",
   },
   {
-    question: "¿Cómo puedo pagar el servicio?",
+    question: "¿Cuáles son los beneficios de los productos de TKuido?",
     answer:
-      "Puedes pagar con tarjeta, transferencia, Zelle o Pago Móvil. También ofrecemos suscripción automática mensual.",
-  },
-  {
-    question:
-      "¿Qué pasa si necesito atención médica urgente fuera del horario?",
-    answer:
-      "No hay problema. Nuestro servicio de telemedicina está disponible 24/7, incluso fines de semana y días feriados.",
-  },
+      "●Protección Personal / Familiar (financiera): Ayudan a las personas a hacer frente a imprevistos y a evitar caer en la pobreza. ●Mayor tranquilidad: Brinda seguridad y tranquilidad al saber que están protegidos ante posibles riesgos. ●Fomento del emprendimiento: Permite a las personas emprender y desarrollar sus negocios con mayor confianza. ●Inclusión financiera: Contribuye a la inclusión financiera de las poblaciones más vulnerables.",
+  }
 ];

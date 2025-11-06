@@ -30,40 +30,36 @@ export default PlainsAndPrices;
 
 const plans = [
   {
-    titulo: "Esencial",
+    titulo: "Telemedicina",
     precio: 3,
     destacado: false,
-    descripcion: "Usuarios individuales",
+    descripcion: "Fúnebres",
     detalles: [
-      "Telemedicina 24/7",
-      "Historia clínica digital",
-      "1 beneficiario funerario",
-      "Acceso desde app y web",
+      "Acceso a récipe e informe médico digital",
+      "Seguimiento y acompañamiento post asistencia",
+      "Atención sanitaria primaria prestada a distancia"
     ],
   },
   {
-    titulo: "Familiar",
-    precio: 6,
+    titulo: "Plan Premium",
+    precio: 16,
     destacado: true,
-    descripcion: "Familias pequeñas (hasta 4 miembros)",
+    descripcion: "Paquetes",
     detalles: [
-      "Telemedicina ilimitada para todos",
-      "Historia médica por miembro",
-      "2 beneficiarios funerarios",
-      "Atención prioritaria",
+      "Servicio de telemedicina 24 horas / 364 días al año",
+      "Especialidad pediatrica",
+      "Medicina general",
     ],
   },
   {
-    titulo: "Total Plus",
-    precio: 10,
+    titulo: "Plan Oro",
+    precio: 3.25,
     destacado: false,
-    descripcion: "Familias completas o cobertura total",
+    descripcion: "Fúnebres",
     detalles: [
-      "Telemedicina 24/7 + seguimiento",
-      "Cobertura funeraria nacional completa",
-      "Hasta 6 beneficiarios",
-      "Asistencia personalizada 24/7",
-      "Descuentos en servicios aliados",
+      "Velatorio en capilla",
+      "Cremación",
+      "Ataúd Standard"
     ],
   },
 ];

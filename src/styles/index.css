@@ -1,13 +1,31 @@
 @import "tailwindcss";
 
-h1,h2,h3,p, button{
-  font-family: "Funnel Sans", sans-serif;
+@font-face {
+  font-family: 'Avenir Black';
+  src: url('../assets/fonts/AVENIRLTSTD-BLACK.OTF');
+}
+
+@font-face {
+  font-family: 'Avenir Roman';
+  src: url('../assets/fonts/AVENIRLTSTD-ROMAN.OTF');
+}
+
+p, li,a, span{
+  font-family: "Avenir Roman", sans-serif;
+  /* font-family: "Funnel Sans", sans-serif; */
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+h1,h2,h3, h4,button{
+  font-family: "Avenir Black", sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
 }
 
 body {
-    background-color: #F5F5F5;
+    /* background-color: #F5F5F5; */
+    background-color: #EFEFEF;
 }
 input[type="date"]::-webkit-calendar-picker-indicator {
   display: none;
