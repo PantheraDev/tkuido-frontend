@@ -52,7 +52,7 @@ const Plan = ({
         ))}
       </ul>
       <div className="h-full flex flex-col justify-end">
-        <Button text="Contratar" />
+        <Button text="Contratar" link="/payment" />
       </div>
     </div>
   );
