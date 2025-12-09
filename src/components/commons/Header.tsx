@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "../commons/Button";
-import logo from "../../assets/Logo.png";
+import Logo from "./Logo";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const font = "Avenir Black";
 
   const toggleMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -16,13 +14,7 @@ const Header = () => {
     <header className="bg-white shadow-md sticky top-0 z-50">
       <div className="flex flex-wrap lg:flex-nowrap items-center justify-between max-w-7xl mx-auto px-6 py-5 gap-4">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2">
-          <img src={logo} alt="TKUIDO Logo" className="h-15"/>
-          <div className="flex flex-col">
-            <span className="text-[#2B7A57] font-bold text-3xl" style={{ fontFamily: font }}>TKUIDO</span>
-            <span className=" text-gray-600 font-bold text-sm text-right" style={{ fontFamily: font }}>Contigo y por ti</span>
-          </div>
-        </a>
+        <Logo />
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-6 text-gray-700 font-medium">

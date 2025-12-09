@@ -1,26 +1,30 @@
+import { BookHeart, LogOut, User, Users } from "lucide-react";
+import Logo from "../commons/Logo";
+
 const SidenavMenu = () => {
   return (
-    <aside className="h-full bg-white rounded-xl shadow-sm flex flex-col">
+    <aside className="h-full bg-white rounded-xl shadow-sm flex justify-between ">
       {/* Logo */}
-      <div className="flex items-center justify-center h-20">
-        <span className="text-[#2B7A57] font-bold text-2xl">TKUIDO</span>
+      <div className="flex">
+        <Logo className="p-4 justify-center" />
+        <div className="h-[85%] w-[1.5px] my-auto rounded bg-gray-200"></div>
       </div>
-      <div className="w-[90%] h-[1.5px] rounded bg-gray-200 mx-auto"></div>
-
       {/* Navegación */}
-      <nav className="flex-1 px-4 py-6 text-sm font-medium text-gray-700">
-        <div className="space-y-2">
+      <nav className="my-auto text-sm font-medium text-gray-700 resp-p ">
+        <div className="flex gap-15">
           {sections.map((section) => (
             <a
               key={section}
               href={`/${section.toLowerCase().replace(" ", "-")}`}
-              className="flex items-center gap-3 p-2 rounded hover:bg-[#F0FDF4] hover:text-[#2B7A57] transition"
+              className="flex flex-col w-24 items-center gap-1 p-2 rounded hover:bg-[#2B7A57] hover:text-[#FFFFFF] transition"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor">
-                <use
-                  href={`#icon-${section.toLowerCase().replace(" ", "-")}`}
-                />
-              </svg>
+              {section === "Perfil" ? (
+                <User />
+              ) : section === "Familia" ? (
+                <Users />
+              ) : (
+                <BookHeart />
+              )}
               {section}
             </a>
           ))}
@@ -28,16 +32,17 @@ const SidenavMenu = () => {
       </nav>
 
       {/* Cerrar sesión abajo */}
-      <div className="px-4 pb-6 mt-auto">
-        <a
-          href="/logout"
-          className="flex items-center gap-3 p-2 text-red-600 hover:bg-red-50 rounded transition"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor">
-            <use href="#icon-logout" />
-          </svg>
-          Cerrar sesión
-        </a>
+      <div className="flex">
+        <div className="h-[85%] w-[1.5px] my-auto rounded bg-gray-200"></div>
+        <div className="px-4 pb-6 mt-auto resp-p">
+          <a
+            href="/logout"
+            className="flex items-center gap-3 p-2 text-red-600 hover:bg-red-50 rounded transition"
+          >
+            <LogOut />
+            Cerrar sesión
+          </a>
+        </div>
       </div>
     </aside>
   );
@@ -45,4 +50,4 @@ const SidenavMenu = () => {
 
 export default SidenavMenu;
 
-const sections = ["Mi Perfil", "Beneficiarios", "Mi Plan"];
+const sections = ["Perfil", "Familia", "Plan"];
