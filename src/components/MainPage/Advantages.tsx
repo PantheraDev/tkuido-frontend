@@ -12,7 +12,7 @@ const Advantages = () => {
     <section className="container mx-auto lg:my-15">
       <div className="px-6 py-16 grid gap-10 items-center content-center md:grid-cols-2 lg:grid-cols-3 lg:gap-15 xl:gap-20 ">
         <h2 className="resp-h2 text-center md:text-start">
-          Beneficion que te ofrece{" "}
+          Beneficios que te ofrece{" "}
           <span className="text-[#35AE74]"style={{ fontFamily: font }}>TKUIDO</span>
         </h2>
         {beneficios.map(({ img, title, description, alt }) => (
