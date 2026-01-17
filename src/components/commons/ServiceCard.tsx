@@ -8,7 +8,6 @@ type ServiceCardProps = {
 };
 
 const ServiceCard = ({ title, description, call, img }: ServiceCardProps) => {
-  console.log("img", img);
   return (
     <div className="relative bg-[#2B7A57] rounded-2xl p-5 overflow-hidden shadow-lg transition transform hover:scale-105 hover:shadow-2xl md:p-10">
       <div className="flex flex-col items-start justify-between h-full gap-6">
