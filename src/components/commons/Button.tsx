@@ -1,17 +1,26 @@
+import { Link } from "react-router-dom";
+
 type ButtonProps = {
   text: string;
+  link?: string;
   color?: string;
   margin?: string;
 };
 
-const Button = ({ text, color = "#35AE74", margin }: ButtonProps) => {
+const Button = ({
+  text,
+  link = "#",
+  color = "#35AE74",
+  margin,
+}: ButtonProps) => {
   return (
-    <button
+    <Link
+      to={link}
       style={{ backgroundColor: color, margin }}
-      className="text-white font-semibold text-base px-6 h-12 rounded-xl hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-green-400 transition"
+      className="flex items-center justify-center text-white font-semibold text-base px-6 h-12 rounded-xl hover:opacity-90 transition"
     >
       {text}
-    </button>
+    </Link>
   );
 };
 

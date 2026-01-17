@@ -3,7 +3,7 @@ import Advantages from "../components/MainPage/Advantages";
 import Contact from "../components/MainPage/Contact";
 import FAQ from "../components/MainPage/FAQ";
 import Footer from "../components/MainPage/Footer";
-import Header from "../components/MainPage/Header";
+import Header from "../components/commons/Header";
 import Hero from "../components/MainPage/Hero";
 import PlainsAndPrices from "../components/MainPage/PlainsAndPrices";
 import Services from "../components/MainPage/Services";
