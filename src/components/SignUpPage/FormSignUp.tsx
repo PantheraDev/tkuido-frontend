@@ -92,8 +92,8 @@ const FormSignUp = () => {
           </div>
           <div className="col-[1/3]">
             <InputForm
-              title="Codigo de referido"
-              placeholder="Ingresa el codigo de referido"
+              title="Código de referido"
+              placeholder="Ingresa el código de referido"
               type="text"
               img={ticket}
               required={false}
