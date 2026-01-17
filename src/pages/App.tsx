@@ -15,19 +15,10 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Register />} />
         <Route path="/payment" element={<PayMent />} />
+        <Route path="/perfil" element={<UserProfilePage />} />
       </Routes>
     </Router>
   );
 }
-
-// function App() {
-//   return (
-//     <>
-//       {/* <MainPage /> */}
-//       {/* <LoginPage /> */}
-//       {/* <UserProfilePage /> */}
-//     </>
-//   );
-// }
 
 export default App;

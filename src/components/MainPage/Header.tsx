@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import Button from "../commons/Button";
-import Logo from "./Logo";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -14,7 +12,9 @@ const Header = () => {
     <header className="bg-white shadow-md sticky top-0 z-50">
       <div className="flex flex-wrap lg:flex-nowrap items-center justify-between max-w-7xl mx-auto px-6 py-5 gap-4">
         {/* Logo */}
-        <Logo />
+        <a href="/" className="flex items-center gap-2">
+          <span className="text-[#2B7A57] font-bold text-3xl">TKUIDO</span>
+        </a>
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-6 text-gray-700 font-medium">
@@ -31,8 +31,8 @@ const Header = () => {
 
         {/* Desktop Buttons */}
         <div className="hidden lg:flex gap-2">
-          <Button text="Iniciar Sesión" link="/login" color="#2B7A57" />
-          <Button text="Regístrate" link="/registro" />
+          <Button text="Iniciar sesión" color="#2B7A57" />
+          <Button text="Regístrate" />
         </div>
 
         {/* Mobile menu toggle */}
@@ -81,3 +81,12 @@ const menu = [
   "Preguntas Frecuentes",
   "Contacto",
 ];
+
+// <!-- Script para toggle -->
+//   <script>
+//     const toggle = document.getElementById("menu-toggle");
+//     const menu = document.getElementById("mobile-menu");
+//     toggle.addEventListener("click", () => {
+//       menu.classList.toggle("hidden");
+//     });
+//   </script>

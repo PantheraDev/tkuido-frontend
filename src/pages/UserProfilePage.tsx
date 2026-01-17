@@ -4,11 +4,11 @@ import SidenavMenu from "../components/UserProfilePage/SidenavMenu";
 const UserProfilePage = () => {
   return (
     <>
-      <div className="grid grid-cols-6">
-        <div className="col-span-1 max-h-screen p-5">
+      <div className="w-[60%] mx-auto">
+        <div className="h-35  p-6">
           <SidenavMenu />
         </div>
-        <div className="col-span-5">
+        <div className="">
           <InfoSection />
         </div>
       </div>
