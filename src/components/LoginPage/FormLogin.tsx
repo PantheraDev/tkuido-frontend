@@ -4,6 +4,8 @@ import lock from "../../assets/lock_icon.png";
 import Button from "../commons/Button";
 
 const FormLogin = () => {
+  
+
   return (
     <>
       {/* Left: Login Form */}
@@ -62,7 +64,7 @@ const FormLogin = () => {
               </a>
             </div>
             <div className="flex flex-col">
-              <Button text="Iniciar Sesión" color="#2B7A57" />
+                <Button link="/perfil" text="Iniciar Sesión" color="#2B7A57" />
             </div>
           </form>
 
