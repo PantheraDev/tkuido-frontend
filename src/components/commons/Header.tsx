@@ -62,7 +62,7 @@ const Header = () => {
             </a>
           ))}
           <div className="flex flex-col gap-2 pt-2">
-            <Button text="Iniciar sesión" color="#2B7A57" />
+            <Button text="Iniciar Sesión" color="#2B7A57" />
             <Button text="Regístrate" />
           </div>
         </div>
