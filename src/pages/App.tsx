@@ -4,6 +4,8 @@ import Home from "../pages/MainPage";
 import Login from "../pages/LoginPage";
 import Register from "../pages/SignUpPage";
 import UserProfilePage from "./UserProfilePage";
+import MainPage from "../pages/MainPage";
+import PayMent from "../pages/Payment";
 
 function App() {
   return (
@@ -12,6 +14,7 @@ function App() {
         <Route path="/tkuido-frontend" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Register />} />
+        <Route path="/payment" element={<PayMent />} />
         <Route path="/perfil" element={<UserProfilePage />} />
       </Routes>
     </Router>
