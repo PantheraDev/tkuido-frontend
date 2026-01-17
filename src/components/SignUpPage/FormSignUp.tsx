@@ -74,7 +74,7 @@ const FormSignUp = () => {
           </div>
           <div className="col-[1/3]">
             <InputForm
-              title="Confirmacion del Correo Electrónico"
+              title="Confirmación del Correo Electrónico"
               placeholder="Ingresa tu correo electrónico nuevamente"
               type="email"
               img={mail}
