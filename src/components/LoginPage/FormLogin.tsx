@@ -17,7 +17,7 @@ const FormLogin = () => {
             </span>
             {/* <img src="/logo.svg" alt="TKUIDO Logo" className="w-20 mb-4" /> */}
           </div>
-          <h2 className="resp-h2 mb-6">Iniciar sesión</h2>
+          <h2 className="resp-h2 mb-6">Iniciar Sesión</h2>
 
           <form className="space-y-5">
             <div>
