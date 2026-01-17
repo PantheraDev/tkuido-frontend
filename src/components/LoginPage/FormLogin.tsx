@@ -74,7 +74,7 @@ const FormLogin = () => {
               to={"/registro"}
               className="text-[#35AE74] font-medium hover:underline"
             >
-              Registrate aquí
+              Regístrate aquí
             </Link>
           </div>
 

@@ -17,7 +17,7 @@ const FormSignUp = () => {
           <Link to={"/tkuido-frontend"}>TKUIDO</Link>
         </span>
         {/* <img src="/logo.svg" alt="TKUIDO Logo" className="w-20 mb-4" /> */}
-        <h2 className="resp-h2 mb-6">Registrate</h2>
+        <h2 className="resp-h2 mb-6">Regístrate</h2>
 
         <form className=" grid grid-cols-2 gap-4">
           <div>
