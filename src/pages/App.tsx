@@ -4,7 +4,6 @@ import Home from "../pages/MainPage";
 import Login from "../pages/LoginPage";
 import Register from "../pages/SignUpPage";
 import UserProfilePage from "./UserProfilePage";
-import MainPage from "../pages/MainPage";
 import PayMent from "../pages/PayMent";
 
 function App() {
