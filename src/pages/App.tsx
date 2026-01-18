@@ -13,8 +13,8 @@ function App() {
         <Route path="/tkuido-frontend" element={<MainPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Register />} />
-        <Route path="/payment" element={<PayMent />} />
-        <Route path="/perfil" element={<UserProfilePage />} />
+        {/*<Route path="/payment" element={<PayMent />} />*/}
+        {/*<Route path="/perfil" element={<UserProfilePage />} />*/}
       </Routes>
     </Router>
   );
