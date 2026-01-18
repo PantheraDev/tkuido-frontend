@@ -8,9 +8,9 @@ import PayMent from "../pages/PayMent";
 
 function App() {
   return (
-    <Router>
+    <Router basename="/tkuido-frontend">
       <Routes>
-        <Route path="/tkuido-frontend" element={<MainPage />} />
+        <Route path="/" element={<MainPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Register />} />
         <Route path="/payment" element={<PayMent />} />
