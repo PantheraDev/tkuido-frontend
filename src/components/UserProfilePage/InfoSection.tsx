@@ -56,7 +56,7 @@ const InfoSection = () => {
       <div className="bg-white rounded-xl shadow p-6 mb-6">
         <div className="flex items-center gap-4">
           <img
-            src="/assets/user-avatar.png"
+            src=""
             alt="Foto de perfil"
             className="w-16 h-16 rounded-full object-cover"
           />
