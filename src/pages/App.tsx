@@ -4,18 +4,24 @@ import Home from "../pages/MainPage";
 import Login from "../pages/LoginPage";
 import Register from "../pages/SignUpPage";
 import UserProfilePage from "./UserProfilePage";
-import MainPage from "../pages/MainPage";
-import PayMent from "../pages/Payment";
+import PayMent from "../pages/PayMent";
+
+import ProtectedRoute from "../components/commons/ProtectedRoute";
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/*Ruta por defecto */}
         <Route path="/tkuido-frontend" element={<Home />} />
+        {/*Rutas públicas */}
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Register />} />
-        <Route path="/payment" element={<PayMent />} />
-        <Route path="/perfil" element={<UserProfilePage />} />
+        {/*Rutas protegidas */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/payment" element={<PayMent />} />
+          <Route path="/perfil" element={<UserProfilePage />} />
+        </Route>
       </Routes>
     </Router>
   );
