@@ -12,7 +12,7 @@ const Header = () => {
     <header className="bg-white shadow-md sticky top-0 z-50">
       <div className="flex flex-wrap lg:flex-nowrap items-center justify-between max-w-7xl mx-auto px-6 py-5 gap-4">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2">
+        <a href="/tkuido-frontend" className="flex items-center gap-2">
           <span className="text-[#2B7A57] font-bold text-3xl">TKUIDO</span>
         </a>
 
