@@ -1,14 +1,18 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
-const ProtectedRoute = () => {
-  const token = localStorage.getItem("token");
+const ProtectedRoute: React.FC = () => {
+  const { user, loading } = useAuth();
+  const location = useLocation();
 
-  // Si no hay token, redirigimos al login
-  if (!token) {
-    return <Navigate to="/login" replace />;
+  if (loading) {
+    return <div>Cargando...</div>;
   }
 
-  // Si hay token, renderizamos el contenido de la ruta (Outlet)
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
   return <Outlet />;
 };
 
