@@ -1,8 +1,10 @@
 import { useState } from "react";
 import Button from "../commons/Button";
+import { useAuth } from "../../hook/useAuthActions";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   const toggleMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -31,8 +33,14 @@ const Header = () => {
 
         {/* Desktop Buttons */}
         <div className="hidden lg:flex gap-2">
-          <Button text="Iniciar sesión" color="#2B7A57" />
-          <Button text="Regístrate" />
+          {!user ? (
+            <>
+              <Button text="Iniciar sesión" color="#2B7A57" />
+              <Button text="Regístrate" />
+            </>
+          ) : (
+            <Button text="Cerrar sesión" color="#2B7A57" onClick={logout} />
+          )}
         </div>
 
         {/* Mobile menu toggle */}
@@ -63,8 +71,14 @@ const Header = () => {
             </a>
           ))}
           <div className="flex flex-col gap-2 pt-2">
-            <Button text="Iniciar sesión" color="#2B7A57" />
-            <Button text="Regístrate" />
+            {!user ? (
+              <>
+                <Button text="Iniciar sesión" color="#2B7A57" />
+                <Button text="Regístrate" />
+              </>
+            ) : (
+              <Button text="Cerrar sesión" color="#2B7A57" onClick={logout} />
+            )}
           </div>
         </div>
       </div>

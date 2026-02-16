@@ -1,9 +1,11 @@
 import { useState } from "react";
 import Button from "../commons/Button";
 import Logo from "./Logo";
+import { useAuth } from "../../hook/useAuthActions";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   const toggleMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -30,8 +32,22 @@ const Header = () => {
 
         {/* Desktop Buttons */}
         <div className="hidden lg:flex gap-2">
-          <Button text="Iniciar Sesión" link="/login" color="#2B7A57" />
-          <Button text="Regístrate" link="/registro" />
+          {!user ? (
+            <>
+              <Button text="Iniciar Sesión" link="/login" color="#2B7A57" />
+              <Button text="Regístrate" link="/registro" />
+            </>
+          ) : (
+            <>
+              <Button text="Perfil" link="/perfil" color="#2B7A57" />
+              <Button
+                text="Cerrar sesión"
+                onClick={logout}
+                color=""
+                className="flex items-center gap-3 p-2 text-red-600 hover:bg-red-50 rounded transition"
+              />
+            </>
+          )}
         </div>
 
         {/* Mobile menu toggle */}
@@ -62,8 +78,22 @@ const Header = () => {
             </a>
           ))}
           <div className="flex flex-col gap-2 pt-2">
-            <Button text="Iniciar Sesión" color="#2B7A57" />
-            <Button text="Regístrate" />
+            {!user ? (
+              <>
+                <Button text="Iniciar Sesión" link="/login" color="#2B7A57" />
+                <Button text="Regístrate" link="/registro" />
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <Button text="Perfil" link="/perfil" color="#2B7A57" />
+                <Button
+                  text="Cerrar sesión"
+                  onClick={logout}
+                  color=""
+                  className="flex items-center gap-3 p-2 text-red-600 hover:bg-red-50 rounded transition text-center"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
