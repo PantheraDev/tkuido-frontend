@@ -5,6 +5,8 @@ type ButtonProps = {
   link?: string;
   color?: string;
   margin?: string;
+  onClick?: () => void;
+  className?: string;
 };
 
 const Button = ({
@@ -12,12 +14,15 @@ const Button = ({
   link = "#",
   color = "#35AE74",
   margin,
+  onClick,
+  className,
 }: ButtonProps) => {
   return (
     <Link
       to={link}
       style={{ backgroundColor: color, margin }}
-      className="flex items-center justify-center text-white font-semibold text-base px-6 h-12 rounded-xl hover:opacity-90 transition"
+      onClick={onClick}
+      className={`${className ? className : "flex items-center justify-center text-white font-semibold text-base px-6 h-12 rounded-xl hover:opacity-90 transition"}  `}
     >
       {text}
     </Link>
