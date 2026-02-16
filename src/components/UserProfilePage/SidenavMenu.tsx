@@ -1,7 +1,10 @@
 import { BookHeart, LogOut, User, Users } from "lucide-react";
 import Logo from "../commons/Logo";
+import { useAuth } from "../../hook/useAuthActions";
 
 const SidenavMenu = () => {
+  const { logout } = useAuth();
+
   return (
     <aside className="h-full bg-white rounded-xl shadow-sm flex justify-between ">
       {/* Logo */}
@@ -36,8 +39,9 @@ const SidenavMenu = () => {
         <div className="h-[85%] w-[1.5px] my-auto rounded bg-gray-200"></div>
         <div className="px-4 pb-6 mt-auto resp-p">
           <a
-            href="/logout"
+            href="/tkuido-frontend"
             className="flex items-center gap-3 p-2 text-red-600 hover:bg-red-50 rounded transition"
+            onClick={logout}
           >
             <LogOut />
             Cerrar sesión
