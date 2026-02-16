@@ -1,10 +1,24 @@
 import { Link } from "react-router-dom";
 import mail from "../../assets/email_icon.png";
 import lock from "../../assets/lock_icon.png";
-import Button from "../commons/Button";
+/*import Button from "../commons/Button";*/
+import { useState } from "react";
+import { useAuthActions } from "../../hook/useAuthActions";
+import { useNavigate } from "react-router-dom";
 
 const FormLogin = () => {
-  
+  const { login, loading, error } = useAuthActions();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const success = await login(email, password);
+    if (success) {
+      navigate("/perfil");
+    }
+  };
 
   return (
     <>
@@ -19,7 +33,7 @@ const FormLogin = () => {
           </div>
           <h2 className="resp-h2 mb-6">Iniciar Sesión</h2>
 
-          <form className="space-y-5">
+          <form className="space-y-5" onSubmit={handleLogin}>
             <div>
               <label className="block mb-1 text-sm font-medium text-gray-700">
                 Email
@@ -34,6 +48,8 @@ const FormLogin = () => {
                   type="email"
                   className="resp-p pl-10 pr-4 py-2 w-full bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
                   placeholder="ejemplo@gmail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
@@ -50,6 +66,8 @@ const FormLogin = () => {
                   type="password"
                   placeholder="••••••••"
                   className="resp-p pl-10 pr-4 py-2 w-full bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
@@ -64,7 +82,15 @@ const FormLogin = () => {
               </a>
             </div>
             <div className="flex flex-col">
-                <Button link="/perfil" text="Iniciar Sesión" color="#2B7A57" />
+              {/*<Button link="/perfil" text="Iniciar Sesión" color="#2B7A57" /> */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="resp-btn bg-[#2B7A57] text-white py-2 rounded-lg hover:bg-green-700 transition duration-300"
+              >
+                {loading ? "Cargando..." : "Iniciar Sesión"}
+              </button>
+              {error && <p className="text-red-500 mt-2">{error}</p>}
             </div>
           </form>
 
