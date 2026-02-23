@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import MainPage from "../pages/MainPage";
 import Login from "../pages/LoginPage";
@@ -9,18 +9,16 @@ import ProtectedRoute from "../components/commons/ProtectedRoute";
 
 function App() {
   return (
-    <Router basename="/tkuido-frontend">
-      <Routes>
-        <Route path="/" element={<MainPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/registro" element={<Register />} />
-        {/*Rutas protegidas */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/payment" element={<PayMent />} />
-          <Route path="/perfil" element={<UserProfilePage />} />
-        </Route>
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/" element={<MainPage />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/registro" element={<Register />} />
+      {/*Rutas protegidas */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/payment" element={<PayMent />} />
+        <Route path="/perfil" element={<UserProfilePage />} />
+      </Route>
+    </Routes>
   );
 }
 

@@ -8,32 +8,273 @@ import name from "../../assets/name_icon.png";
 import calendar from "../../assets/calendar_icon.png";
 import ticket from "../../assets/ticket_icon.png";
 import { Link } from "react-router-dom";
+import { useAxios } from "../../hook/useAxios";
+import { useEffect, useState, useCallback } from "react";
+
+type Usuario = {
+  ci: string;
+  correo: string;
+  password: string;
+  fk_rol: string;
+  vendedores: string;
+};
+
+// Respuesta esperada al crear usuario
+type UsuarioResponse = {
+  user: {
+    idUser: string | number;
+    ci: string;
+    correo: string;
+    password: string;
+  };
+};
+
+type Cliente = {
+  pNombre: string;
+  sNombre: string;
+  pApellido: string;
+  sApellido: string;
+  fechaNacimiento: string;
+  sexo: string;
+  telefono: string;
+  direccion: string;
+  lugar: string; // id del estado (como string)
+  fk_user: string;
+};
 
 const FormSignUp = () => {
+  const { execute: execUser } = useAxios<UsuarioResponse>("/usuario", {
+    method: "POST",
+    manual: true,
+  });
+
+  const { execute: execCliente } = useAxios("/cliente", {
+    method: "POST",
+    manual: true,
+  });
+
+  // Endpoints esperados:
+  // - GET /lugar/estados
+
+  // Respuesta backend: { states: [{ idLugar, nombre, ...}] }
+  type Option = { id: string | number; nombre: string };
+
+  const { execute: execEstados } = useAxios<Option[]>("/lugar/estados", {
+    method: "GET",
+    manual: true,
+  });
+
+  const [estados, setEstados] = useState<Option[]>([]);
+
+  // Local state
+  const [form, setForm] = useState({
+    pnombre: "",
+    snombre: "",
+    papellido: "",
+    sapellido: "",
+    telefono: "",
+    ci: "",
+    sexo: "",
+    fechaNacimiento: "",
+    direccion: "",
+
+    // solo estado
+    idEstado: "",
+
+    // lugar = nombre del estado
+    lugar: "",
+
+    correo: "",
+    correoConfirm: "",
+    password: "",
+    referido: "",
+  });
+
+  const normalizeOptions = useCallback((res: unknown): Option[] => {
+    const toOptionArray = (arr: unknown[]): Option[] =>
+      arr
+        .map((x) => {
+          if (!x || typeof x !== "object") return null;
+          const anyX = x as Record<string, unknown>;
+          const id =
+            (anyX.id as string | number | undefined) ??
+            (anyX.idLugar as string | number | undefined);
+          const nombre = (anyX.nombre as string | undefined) ?? "";
+          if (id === undefined || nombre === "") return null;
+          return { id, nombre } as Option;
+        })
+        .filter(Boolean) as Option[];
+
+    if (Array.isArray(res)) return toOptionArray(res);
+
+    if (res && typeof res === "object") {
+      const anyRes = res as Record<string, unknown>;
+      const candidates = [anyRes.data, anyRes.states, anyRes.estados];
+      for (const c of candidates) {
+        if (Array.isArray(c)) return toOptionArray(c);
+      }
+    }
+
+    return [];
+  }, []);
+
+  useEffect(() => {
+    // Cargar estados solo una vez al montar.
+    let cancelled = false;
+
+    const fetchEstados = async () => {
+      try {
+        const res = await execEstados();
+        if (!cancelled) setEstados(normalizeOptions(res));
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) setEstados([]);
+      }
+    };
+
+    fetchEstados();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // lugar = id del estado seleccionado (se envía como string)
+    setForm((prev) => ({ ...prev, lugar: String(form.idEstado || "") }));
+  }, [form.idEstado]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+
+    // Basic validations
+    if (
+      !form.pnombre ||
+      !form.papellido ||
+      !form.telefono ||
+      !form.ci ||
+      !form.sexo ||
+      !form.fechaNacimiento ||
+      !form.idEstado ||
+      !form.direccion ||
+      !form.correo ||
+      !form.password
+    ) {
+      alert("Por favor completa los campos requeridos.");
+      return;
+    }
+    if (form.correo !== form.correoConfirm) {
+      alert("El correo y su confirmación no coinciden.");
+      return;
+    }
+
+    try {
+      // 1) Registrar usuario
+      const usuarioPayload: Usuario = {
+        ci: form.ci,
+        correo: form.correo,
+        password: form.password,
+        fk_rol: "1", // rol cliente
+        vendedores: form.referido || "",
+      };
+
+      const usuarioRes = await execUser({ data: usuarioPayload });
+      const userId = usuarioRes?.user.idUser;
+      console.log(userId);
+      console.log(usuarioRes.user.idUser);
+      if (!userId) {
+        throw new Error("No se pudo obtener el ID del usuario creado.");
+      }
+
+      // 2) Registrar cliente con fk_user
+      const clientePayload: Cliente = {
+        pNombre: form.pnombre,
+        sNombre: form.snombre,
+        pApellido: form.papellido,
+        sApellido: form.sapellido,
+        telefono: form.telefono,
+        fechaNacimiento: form.fechaNacimiento,
+        sexo: form.sexo,
+
+        // direccion = la dirección detallada escrita por el usuario
+        direccion: form.direccion,
+
+        // lugar = id del estado
+        lugar: String(form.idEstado),
+
+        fk_user: String(userId),
+      };
+
+      await execCliente({ data: clientePayload });
+
+      alert("Registro exitoso");
+      window.location.href = "/login";
+    } catch (err) {
+      console.error(err);
+      alert("Error al registrar. Intenta nuevamente.");
+    }
+  };
+
   return (
     <div className="w-full lg:w-1/2 p-5 xl:px-25 lg:px-10 md:px-25 h-fit">
       <div className="">
         <span className="text-[#2B7A57] font-bold text-3xl">
-          <Link to={"/tkuido-frontend"}>TKUIDO</Link>
+          <Link to={"/tkuido-frontend/"}>TKUIDO</Link>
         </span>
         {/* <img src="/logo.svg" alt="TKUIDO Logo" className="w-20 mb-4" /> */}
         <h2 className="resp-h2 mb-6">Regístrate</h2>
 
-        <form className=" grid grid-cols-2 gap-4">
+        <form className=" grid grid-cols-2 gap-4" onSubmit={handleSubmit}>
           <div>
             <InputForm
-              title="Nombre"
-              placeholder="Ingresa tu nombre"
+              title="Primer nombre"
+              placeholder="Ingresa tu primer nombre"
               img={name}
               required
+              name="pnombre"
+              value={form.pnombre}
+              onChange={handleChange}
             />
           </div>
           <div>
             <InputForm
-              title="Apellido"
-              placeholder="Ingresa tu apellido"
+              title="Segundo nombre"
+              placeholder="Ingresa tu segundo nombre"
+              img={name}
+              required={false}
+              name="snombre"
+              value={form.snombre}
+              onChange={handleChange}
+            />
+          </div>
+          <div>
+            <InputForm
+              title="Primer apellido"
+              placeholder="Ingresa tu primer apellido"
               img={name}
               required
+              name="papellido"
+              value={form.papellido}
+              onChange={handleChange}
+            />
+          </div>
+          <div>
+            <InputForm
+              title="Segundo apellido"
+              placeholder="Ingresa tu segundo apellido"
+              img={name}
+              required={false}
+              name="sapellido"
+              value={form.sapellido}
+              onChange={handleChange}
             />
           </div>
           <div>
@@ -43,6 +284,9 @@ const FormSignUp = () => {
               type="tel"
               img={phone}
               required
+              name="telefono"
+              value={form.telefono}
+              onChange={handleChange}
             />
           </div>
           <div>
@@ -52,17 +296,96 @@ const FormSignUp = () => {
               type="text"
               img={id}
               required
+              name="ci"
+              value={form.ci}
+              onChange={handleChange}
             />
           </div>
-          <div className="col-[1/3]">
+
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-900">
+              Sexo<span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <img
+                src={id}
+                alt="Sexo icono"
+                className="absolute top-1/2 left-3 transform -translate-y-1/2 w-5 h-5"
+              />
+              <select
+                name="sexo"
+                value={form.sexo}
+                onChange={handleChange}
+                required
+                className="text-sm lg:text-base pl-10 pr-4 py-2 w-full bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
+              >
+                <option value="" disabled>
+                  Selecciona tu sexo
+                </option>
+                <option value="M">Masculino</option>
+                <option value="F">Femenino</option>
+                <option value="O">Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
             <InputForm
               title="Fecha de nacimiento"
               placeholder="Ingresa tu fecha de nacimiento"
               type="date"
               img={calendar}
               required
+              name="fechaNacimiento"
+              value={form.fechaNacimiento}
+              onChange={handleChange}
             />
           </div>
+
+          <div className="col-[1/3] grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-900">
+                Estado<span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <img
+                  src={id}
+                  alt="Estado icono"
+                  className="absolute top-1/2 left-3 transform -translate-y-1/2 w-5 h-5"
+                />
+                <select
+                  name="idEstado"
+                  value={form.idEstado}
+                  onChange={handleChange}
+                  required
+                  className="text-sm lg:text-base pl-10 pr-4 py-2 w-full bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
+                >
+                  <option value="" disabled>
+                    Selecciona estado
+                  </option>
+                  {estados.map((x) => (
+                    <option key={String(x.id)} value={String(x.id)}>
+                      {x.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="col-[1/3]">
+              <InputForm
+                title="Dirección detallada"
+                placeholder="Ej: Calle 10, Casa #5, Sector Centro"
+                type="text"
+                img={id}
+                required
+                name="direccion"
+                value={form.direccion}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
           <div className="col-[1/3]">
             <InputForm
               title="Correo Electrónico"
@@ -70,6 +393,9 @@ const FormSignUp = () => {
               type="email"
               img={mail}
               required
+              name="correo"
+              value={form.correo}
+              onChange={handleChange}
             />
           </div>
           <div className="col-[1/3]">
@@ -79,6 +405,9 @@ const FormSignUp = () => {
               type="email"
               img={mail}
               required
+              name="correoConfirm"
+              value={form.correoConfirm}
+              onChange={handleChange}
             />
           </div>
           <div className="col-[1/3]">
@@ -88,6 +417,9 @@ const FormSignUp = () => {
               type="password"
               img={lock}
               required
+              name="password"
+              value={form.password}
+              onChange={handleChange}
             />
           </div>
           <div className="col-[1/3]">
@@ -97,11 +429,20 @@ const FormSignUp = () => {
               type="text"
               img={ticket}
               required={false}
+              name="referido"
+              value={form.referido}
+              onChange={handleChange}
             />
           </div>
 
           <div className="flex flex-col col-[1/3]">
-            <Button text="Registrarse" color="#2B7A57" />
+            <Button
+              text="Registrarse"
+              onClick={() => handleSubmit()}
+              color="#2B7A57"
+              link="#"
+              className="flex items-center justify-center text-white font-semibold text-base px-6 h-12 rounded-xl hover:opacity-90 transition"
+            />
           </div>
         </form>
 

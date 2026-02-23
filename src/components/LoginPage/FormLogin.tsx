@@ -27,7 +27,7 @@ const FormLogin = () => {
         <div className="mb-8 ">
           <div className="flex gap-5 items-center">
             <span className="text-[#2B7A57] font-bold text-3xl">
-              <Link to={"/tkuido-frontend"}>TKUIDO</Link>
+              <Link to={"/tkuido-frontend/"}>TKUIDO</Link>
             </span>
             {/* <img src="/logo.svg" alt="TKUIDO Logo" className="w-20 mb-4" /> */}
           </div>

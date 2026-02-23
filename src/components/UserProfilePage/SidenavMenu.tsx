@@ -39,7 +39,7 @@ const SidenavMenu = () => {
         <div className="h-[85%] w-[1.5px] my-auto rounded bg-gray-200"></div>
         <div className="px-4 pb-6 mt-auto resp-p">
           <a
-            href="/tkuido-frontend"
+            href="/tkuido-frontend/"
             className="flex items-center gap-3 p-2 text-red-600 hover:bg-red-50 rounded transition"
             onClick={logout}
           >
