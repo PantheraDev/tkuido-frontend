@@ -8,13 +8,125 @@ import name from "../../assets/name_icon.png";
 import calendar from "../../assets/calendar_icon.png";
 import ticket from "../../assets/ticket_icon.png";
 import { Link } from "react-router-dom";
+import { useAxios } from "../../hook/useAxios";
+import { useState } from "react";
+
+type Usuario = {
+  ci: string;
+  correo: string;
+  password: string;
+  fk_rol: string;
+  vendedores: string;
+};
+
+// Respuesta esperada al crear usuario
+type UsuarioResponse = {
+  id: string | number;
+};
+
+type Cliente = {
+  pNombre: string;
+  sNombre: string;
+  pApellido: string;
+  sApellido: string;
+  fechaNacimiento: string;
+  sexo: string;
+  telefono: string;
+  direccion: string;
+  lugar: string;
+  fk_user: string;
+};
 
 const FormSignUp = () => {
+  const { execute: execUser } = useAxios<UsuarioResponse>("/usuario", {
+    method: "POST",
+    manual: true,
+  });
+
+  const { execute: execCliente } = useAxios("/cliente", {
+    method: "POST",
+    manual: true,
+  });
+
+  // Local state
+  const [form, setForm] = useState({
+    nombre: "",
+    apellido: "",
+    telefono: "",
+    ci: "",
+    fechaNacimiento: "",
+    correo: "",
+    correoConfirm: "",
+    password: "",
+    referido: "",
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async () => {
+    // Basic validations
+    if (
+      !form.nombre ||
+      !form.apellido ||
+      !form.telefono ||
+      !form.ci ||
+      !form.fechaNacimiento ||
+      !form.correo ||
+      !form.password
+    ) {
+      alert("Por favor completa los campos requeridos.");
+      return;
+    }
+    if (form.correo !== form.correoConfirm) {
+      alert("El correo y su confirmación no coinciden.");
+      return;
+    }
+
+    try {
+      // 1) Registrar usuario
+      const usuarioPayload: Usuario = {
+        ci: form.ci,
+        correo: form.correo,
+        password: form.password,
+        fk_rol: "1", // rol cliente
+        vendedores: form.referido || "",
+      };
+
+      const usuarioRes = await execUser({ data: usuarioPayload });
+      const userId = usuarioRes?.id;
+      if (!userId) {
+        throw new Error("No se pudo obtener el ID del usuario creado.");
+      }
+
+      // 2) Registrar cliente con fk_user
+      const clientePayload: Partial<Cliente> = {
+        pNombre: form.nombre,
+        sNombre: "",
+        pApellido: form.apellido,
+        sApellido: "",
+        telefono: form.telefono,
+        fechaNacimiento: form.fechaNacimiento,
+        fk_user: String(userId),
+      };
+
+      await execCliente({ data: clientePayload });
+
+      alert("Registro exitoso");
+      // window.location.href = "/login";
+    } catch (err) {
+      console.error(err);
+      alert("Error al registrar. Intenta nuevamente.");
+    }
+  };
+
   return (
     <div className="w-full lg:w-1/2 p-5 xl:px-25 lg:px-10 md:px-25 h-fit">
       <div className="">
         <span className="text-[#2B7A57] font-bold text-3xl">
-          <Link to={"/tkuido-frontend"}>TKUIDO</Link>
+          <Link to={"/tkuido-frontend/"}>TKUIDO</Link>
         </span>
         {/* <img src="/logo.svg" alt="TKUIDO Logo" className="w-20 mb-4" /> */}
         <h2 className="resp-h2 mb-6">Regístrate</h2>
@@ -26,6 +138,9 @@ const FormSignUp = () => {
               placeholder="Ingresa tu nombre"
               img={name}
               required
+              name="nombre"
+              value={form.nombre}
+              onChange={handleChange}
             />
           </div>
           <div>
@@ -34,6 +149,9 @@ const FormSignUp = () => {
               placeholder="Ingresa tu apellido"
               img={name}
               required
+              name="apellido"
+              value={form.apellido}
+              onChange={handleChange}
             />
           </div>
           <div>
@@ -43,6 +161,9 @@ const FormSignUp = () => {
               type="tel"
               img={phone}
               required
+              name="telefono"
+              value={form.telefono}
+              onChange={handleChange}
             />
           </div>
           <div>
@@ -52,6 +173,9 @@ const FormSignUp = () => {
               type="text"
               img={id}
               required
+              name="ci"
+              value={form.ci}
+              onChange={handleChange}
             />
           </div>
           <div className="col-[1/3]">
@@ -61,6 +185,9 @@ const FormSignUp = () => {
               type="date"
               img={calendar}
               required
+              name="fechaNacimiento"
+              value={form.fechaNacimiento}
+              onChange={handleChange}
             />
           </div>
           <div className="col-[1/3]">
@@ -70,6 +197,9 @@ const FormSignUp = () => {
               type="email"
               img={mail}
               required
+              name="correo"
+              value={form.correo}
+              onChange={handleChange}
             />
           </div>
           <div className="col-[1/3]">
@@ -79,6 +209,9 @@ const FormSignUp = () => {
               type="email"
               img={mail}
               required
+              name="correoConfirm"
+              value={form.correoConfirm}
+              onChange={handleChange}
             />
           </div>
           <div className="col-[1/3]">
@@ -88,6 +221,9 @@ const FormSignUp = () => {
               type="password"
               img={lock}
               required
+              name="password"
+              value={form.password}
+              onChange={handleChange}
             />
           </div>
           <div className="col-[1/3]">
@@ -97,11 +233,14 @@ const FormSignUp = () => {
               type="text"
               img={ticket}
               required={false}
+              name="referido"
+              value={form.referido}
+              onChange={handleChange}
             />
           </div>
 
           <div className="flex flex-col col-[1/3]">
-            <Button text="Registrarse" color="#2B7A57" />
+            <Button text="Registrarse" onClick={handleSubmit} color="#2B7A57" />
           </div>
         </form>
 

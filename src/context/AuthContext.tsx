@@ -3,6 +3,7 @@ import {
   useState,
   useContext,
   useEffect,
+  useCallback,
   type ReactNode,
 } from "react";
 import { jwtDecode } from "jwt-decode";
@@ -29,6 +30,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserPayload | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  //const navigate = useNavigate();
+  const logout = useCallback(() => {
+    localStorage.removeItem("token");
+    setUser(null);
+
+    window.location.href = "/tkuido-frontend/";
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -45,17 +54,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     setLoading(false);
-  }, []);
+  }, [logout]);
 
   const login = (token: string) => {
     localStorage.setItem("token", token);
     const decoded = jwtDecode<UserPayload>(token);
     setUser(decoded);
-  };
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
   };
 
   return (

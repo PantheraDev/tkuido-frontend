@@ -1,6 +1,37 @@
+import { useEffect, useState } from "react";
+import { useAxios } from "../../hook/useAxios";
 import Button from "../commons/Button";
+import { jwtDecode } from "jwt-decode";
 
 const InfoSection = () => {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userData, setUserData] = useState<any>(null);
+
+  const { execute, loading, error } = useAxios("/cliente/one/", {
+    method: "GET",
+    manual: true,
+  });
+
+  // useEffect(async (): Promise<void> => {
+  //   const id = extractUserIdFromToken();
+  //   if (id) {
+  //     const response = await execute({
+  //       params: {
+  //         id: userId,
+  //       },
+  //     });
+  //     console.log("Respuesta del servidor:", response);
+  //   }
+  // }, [userId, execute]);
+
+  const extractUserIdFromToken = (): string | null => {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+    const decoded = jwtDecode<{ id: string }>(token);
+    setUserId(decoded.id.toString());
+    return decoded.id;
+  };
+
   const user = {
     nombre: "Carlos",
     apellido: "González",

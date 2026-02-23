@@ -4,6 +4,10 @@ type InputFormProps = {
   type?: string;
   required?: boolean;
   img?: string;
+  // new props for controlled input
+  name?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 const InputForm = ({
@@ -12,6 +16,9 @@ const InputForm = ({
   type,
   required,
   img,
+  name,
+  value,
+  onChange,
 }: InputFormProps) => {
   return (
     <div className="">
@@ -27,6 +34,9 @@ const InputForm = ({
         />
 
         <input
+          name={name}
+          value={value}
+          onChange={onChange}
           type={type || "text"} // Default to text if type is not provided
           className={
             type === "date"

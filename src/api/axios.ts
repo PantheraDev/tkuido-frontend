@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000', // Cambia esto por la IP de tu server Linux
+  baseURL: 'http://148.113.172.29:3000', // Cambia esto por la IP de tu server Linux
   headers: {
     'Content-Type': 'application/json',
     'accept': '*/*'
