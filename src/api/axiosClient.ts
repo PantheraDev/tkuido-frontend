@@ -7,8 +7,8 @@ const axiosClient = axios.create({
     import.meta.env.VITE_BACKEND_URL ||
     import.meta.env.VITE_API_BASE_URL ||
     // Evita mixed-content: si la página está en HTTPS, forzamos https en el host.
-    (typeof window !== "undefined" && window.location.protocol === "https:"
-      ? "https://148.113.172.29"
+    (typeof window !== "undefined" && (window.location.protocol === "https:" || window.location.protocol === "http:")
+      ? `${window.location.protocol}//148.113.172.29`
       : "http://148.113.172.29"),
   headers: {
     "Content-Type": "application/json",
