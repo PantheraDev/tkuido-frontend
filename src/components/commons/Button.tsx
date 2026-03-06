@@ -7,6 +7,9 @@ type ButtonProps = {
   margin?: string;
   onClick?: () => void;
   className?: string;
+  loading?: boolean;
+  loadingText?: string;
+  disabled?: boolean;
 };
 
 const Button = ({
@@ -16,15 +19,33 @@ const Button = ({
   margin,
   onClick,
   className,
+  loading = false,
+  loadingText,
+  disabled = false,
 }: ButtonProps) => {
+  const isDisabled = disabled || loading;
+  const contentText = loading && loadingText ? loadingText : text;
+  const baseClasses =
+    className ||
+    "flex items-center justify-center text-white font-semibold text-base px-6 h-12 rounded-xl transition";
+  const disabledClasses = isDisabled
+    ? " opacity-70 cursor-not-allowed pointer-events-none"
+    : " hover:opacity-90";
+
   return (
     <Link
       to={link}
       style={{ backgroundColor: color, margin }}
-      onClick={onClick}
-      className={`${className ? className : "flex items-center justify-center text-white font-semibold text-base px-6 h-12 rounded-xl hover:opacity-90 transition"}  `}
+      onClick={isDisabled ? undefined : onClick}
+      className={`${baseClasses}${disabledClasses}`}
+      aria-busy={loading}
     >
-      {text}
+      <span className="inline-flex items-center justify-center gap-2">
+        {loading && (
+          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/70 border-t-transparent" />
+        )}
+        {contentText}
+      </span>
     </Link>
   );
 };
