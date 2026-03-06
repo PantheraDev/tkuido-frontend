@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://148.113.172.29', // Cambia esto por la IP de tu server Linux
+  baseURL:
+    typeof window !== 'undefined' && window.location.protocol === 'https:'
+      ? 'https://148.113.172.29'
+      : 'http://148.113.172.29', // Ajusta al dominio de tu server
   headers: {
     'Content-Type': 'application/json',
     'accept': '*/*'
