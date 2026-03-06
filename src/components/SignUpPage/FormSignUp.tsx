@@ -7,9 +7,10 @@ import id from "../../assets/id_icon.png";
 import name from "../../assets/name_icon.png";
 import calendar from "../../assets/calendar_icon.png";
 import ticket from "../../assets/ticket_icon.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAxios } from "../../hook/useAxios";
 import { useEffect, useState, useCallback } from "react";
+import type { AxiosError } from "axios";
 
 type Usuario = {
   ci: string;
@@ -65,6 +66,10 @@ const FormSignUp = () => {
   });
 
   const [estados, setEstados] = useState<Option[]>([]);
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState("");
+  const navigate = useNavigate();
 
   // Local state
   const [form, setForm] = useState({
@@ -154,6 +159,8 @@ const FormSignUp = () => {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
+    setSubmitError("");
+    setSubmitSuccess("");
 
     // Basic validations
     if (
@@ -168,14 +175,15 @@ const FormSignUp = () => {
       !form.correo ||
       !form.password
     ) {
-      alert("Por favor completa los campos requeridos.");
+      setSubmitError("Por favor completa los campos requeridos.");
       return;
     }
     if (form.correo !== form.correoConfirm) {
-      alert("El correo y su confirmación no coinciden.");
+      setSubmitError("El correo y su confirmación no coinciden.");
       return;
     }
 
+    setIsSubmitting(true);
     try {
       // 1) Registrar usuario
       const usuarioPayload: Usuario = {
@@ -214,12 +222,28 @@ const FormSignUp = () => {
       };
 
       await execCliente({ data: clientePayload });
-
-      alert("Registro exitoso");
-      window.location.href = "/login";
+      setSubmitSuccess("Registro exitoso. Redirigiendo al login...");
+      setTimeout(() => navigate("/login"), 1200);
     } catch (err) {
-      console.error(err);
-      alert("Error al registrar. Intenta nuevamente.");
+      const axiosErr = err as AxiosError<{ message?: string; error?: string }>;
+      const serverMsg =
+        axiosErr.response?.data?.message || axiosErr.response?.data?.error;
+      const status = axiosErr.response?.status;
+      const isDuplicate =
+        status === 400 &&
+        typeof serverMsg === "string" &&
+        serverMsg.toLowerCase().includes("duplicate key value");
+      const friendlyMsg = isDuplicate
+        ? "Ya existe un usuario con esos datos (correo o cédula). Usa otros datos o inicia sesión."
+        : serverMsg || "Error al registrar. Intenta nuevamente.";
+
+      console.error("Registro fallido", {
+        status,
+        data: axiosErr.response?.data,
+      });
+      setSubmitError(friendlyMsg);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -343,7 +367,7 @@ const FormSignUp = () => {
           </div>
 
           <div className="col-[1/3] grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
+            <div className="col-span-2">
               <label className="block mb-1 text-sm font-medium text-gray-900">
                 Estado<span className="text-red-500">*</span>
               </label>
@@ -441,9 +465,24 @@ const FormSignUp = () => {
               onClick={() => handleSubmit()}
               color="#2B7A57"
               link="#"
-              className="flex items-center justify-center text-white font-semibold text-base px-6 h-12 rounded-xl hover:opacity-90 transition"
+              className="flex items-center justify-center text-white font-semibold text-base px-6 h-12 rounded-xl transition"
+              loading={isSubmitting}
+              loadingText="Registrando..."
+              disabled={isSubmitting}
             />
           </div>
+
+          {submitError && (
+            <div className="col-span-2 text-red-600 text-sm font-medium">
+              {submitError}
+            </div>
+          )}
+
+          {submitSuccess && (
+            <div className="col-span-2 text-green-600 text-sm font-medium">
+              {submitSuccess}
+            </div>
+          )}
         </form>
 
         <div className="mt-4 text-sm text-center lg:text-left">
