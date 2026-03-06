@@ -6,7 +6,10 @@ const axiosClient = axios.create({
   baseURL:
     import.meta.env.VITE_BACKEND_URL ||
     import.meta.env.VITE_API_BASE_URL ||
-    "http://148.113.172.29", // fallback al host público usado en axios.ts
+    // Evita mixed-content: si la página está en HTTPS, forzamos https en el host.
+    (typeof window !== "undefined" && window.location.protocol === "https:"
+      ? "https://148.113.172.29"
+      : "http://148.113.172.29"),
   headers: {
     "Content-Type": "application/json",
   },
