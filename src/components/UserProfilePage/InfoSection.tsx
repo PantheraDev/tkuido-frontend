@@ -1,103 +1,217 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAxios } from "../../hook/useAxios";
 import Button from "../commons/Button";
 import { jwtDecode } from "jwt-decode";
 
+type JwtPayload = {
+  id?: string | number;
+  sub?: string | number;
+  idUser?: string | number;
+};
+
+type Lugar = {
+  idLugar: number | string;
+  nombre: string;
+  tipo?: string;
+};
+
+type UsuarioObj = {
+  idUsuario: string;
+  ci: string;
+  correo: string;
+  // ...otros campos
+};
+
+type Producto = {
+  idProducto: number | string;
+  nombre?: string;
+  nombreComercial?: string;
+  descripcion?: string;
+  tipo?: string | number;
+};
+
+type Pago = {
+  idPago: number | string;
+  fecha?: string;
+  monto?: string | number;
+  polizaId?: number | string | null;
+};
+
+type PolizaPago = {
+  idPago: number | string;
+  fecha?: string;
+  monto?: string | number;
+  polizaId?: number | string | null;
+};
+
+type Poliza = {
+  idPoliza: number | string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  prima?: string | number;
+  sumaAsegurada?: string | number;
+  deducible?: string | number;
+  estado?: string;
+  rutaDocumento?: string;
+  producto?: Producto | null;
+  pagos?: PolizaPago[];
+};
+
+type ClientePerfil = {
+  pNombre: string;
+  sNombre: string;
+  pApellido: string;
+  sApellido: string;
+  fechaNacimiento: string;
+  sexo: string;
+  telefono: string;
+  direccion: string;
+  lugar: { value: Lugar; error: unknown } | Lugar | string | number | null;
+  idUser: UsuarioObj;
+  polizas: Poliza[];
+  pagos: Pago[];
+};
+
+type PerfilResponse = ClientePerfil;
+
 const InfoSection = () => {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userData, setUserData] = useState<any>(null);
+  const { execute, loading, error } = useAxios<PerfilResponse>(
+    "/cliente/perfil/",
+    {
+      method: "GET",
+      manual: true,
+    },
+  );
 
-  const { execute, loading, error } = useAxios("/cliente/one/", {
-    method: "GET",
-    manual: true,
-  });
+  const [user, setUser] = useState<ClientePerfil | null>(null);
 
-  // useEffect(async (): Promise<void> => {
-  //   const id = extractUserIdFromToken();
-  //   if (id) {
-  //     const response = await execute({
-  //       params: {
-  //         id: userId,
-  //       },
-  //     });
-  //     console.log("Respuesta del servidor:", response);
-  //   }
-  // }, [userId, execute]);
+  useEffect(() => {
+    let cancelled = false;
 
-  const extractUserIdFromToken = (): string | null => {
-    const token = localStorage.getItem("token");
-    if (!token) return null;
-    const decoded = jwtDecode<{ id: string }>(token);
-    setUserId(decoded.id.toString());
-    return decoded.id;
+    const fetchPerfil = async () => {
+      const userIdFromStorage = localStorage.getItem("userId");
+      let userId: string | null = userIdFromStorage;
+
+      // Fallback: intenta extraer el id del JWT si no existe userId en storage
+      if (!userId) {
+        const token = localStorage.getItem("token");
+        if (token) {
+          try {
+            const decoded = jwtDecode<JwtPayload>(token);
+            const candidate = decoded?.id ?? decoded?.sub ?? decoded?.idUser;
+            if (candidate !== undefined && candidate !== null) {
+              userId = String(candidate);
+              localStorage.setItem("userId", userId);
+            }
+          } catch {
+            // noop
+          }
+        }
+      }
+
+      if (!userId) return;
+
+      try {
+        const response = await execute({
+          url: `/cliente/perfil/${userId}`,
+        });
+
+        if (!cancelled) {
+          setUser(response);
+          console.log("Respuesta del servidor:", response);
+        }
+      } catch (e) {
+        if (!cancelled) console.error(e);
+      }
+    };
+
+    fetchPerfil();
+
+    return () => {
+      cancelled = true;
+    };
+    // `execute` cambia de referencia (por cómo está implementado useAxios),
+    // así que lo omitimos para evitar loops.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fullName = useMemo(() => {
+    if (!user) return "";
+    return [user.pNombre, user.sNombre, user.pApellido, user.sApellido]
+      .filter(Boolean)
+      .join(" ");
+  }, [user]);
+
+  const estadoNombre = useMemo(() => {
+    if (!user?.lugar) return "";
+
+    const lugar = user.lugar;
+
+    if (typeof lugar === "string" || typeof lugar === "number") {
+      return String(lugar);
+    }
+
+    if (typeof lugar === "object") {
+      // Caso: { value: { nombre: ... }, error: ... }
+      if ("value" in lugar) {
+        const v = (lugar as { value?: unknown }).value;
+        if (v && typeof v === "object" && "nombre" in v) {
+          return String((v as { nombre?: unknown }).nombre ?? "");
+        }
+      }
+
+      // Caso: { nombre: ... }
+      if ("nombre" in lugar) {
+        return String((lugar as { nombre?: unknown }).nombre ?? "");
+      }
+    }
+
+    return "";
+  }, [user]);
+
+  const formatDate = (value?: string) => {
+    if (!value) return "-";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value;
+    return d.toLocaleDateString();
   };
 
-  const user = {
-    nombre: "Carlos",
-    apellido: "González",
-    fechaNacimiento: "1990-10-12",
-    cedula: "V-12345678",
-    telefono: "+58 412-1234567",
-    correo: "carlosgonzalez@email.com",
-    rol: "Usuario",
-    direccion: {
-      pais: "Venezuela",
-      estado: "Distrito Capital",
-      ciudad: "Caracas",
-      codigoPostal: "1010",
-    },
+  const formatMoney = (value?: string | number) => {
+    if (value === undefined || value === null || value === "") return "-";
+    const n = typeof value === "string" ? Number(value) : value;
+    if (Number.isNaN(n)) return String(value);
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(n);
   };
 
-  // Datos adicionales
-  const plan = {
-    nombre: "Plan Familiar Premium",
-    estado: "Activo",
-    cobertura: ["Salud", "Funeraria", "Vida"],
-    fechaInicio: "2025-01-15",
-    fechaRenovacion: "2026-01-15",
-    primaMensual: "$12.99",
-  };
-
-  const pagos = [
-    {
-      fecha: "2025-11-01",
-      monto: "$12.99",
-      metodo: "Tarjeta",
-      estado: "Pagado",
-    },
-    {
-      fecha: "2025-10-01",
-      monto: "$12.99",
-      metodo: "Tarjeta",
-      estado: "Pagado",
-    },
-    {
-      fecha: "2025-09-01",
-      monto: "$12.99",
-      metodo: "Tarjeta",
-      estado: "Pagado",
-    },
-  ];
+  const polizas = useMemo(() => user?.polizas ?? [], [user]);
+  const pagos = useMemo(() => user?.pagos ?? [], [user]);
 
   return (
     <div className="p-6 min-h-screen">
       <h1 className="text-2xl font-bold text-[#2B7A57] mb-6">Mi Perfil</h1>
 
+      {loading && (
+        <div className="mb-4 text-sm text-gray-600">Cargando perfil...</div>
+      )}
+      {error && (
+        <div className="mb-4 text-sm text-red-600">
+          Error cargando perfil. Revisa tu sesión.
+        </div>
+      )}
+
       {/* Perfil resumido */}
       <div className="bg-white rounded-xl shadow p-6 mb-6">
         <div className="flex items-center gap-4">
-          <img
-            src=""
-            alt="Foto de perfil"
-            className="w-16 h-16 rounded-full object-cover"
-          />
+          
           <div>
-            <h2 className="text-lg font-semibold">
-              {user.nombre} {user.apellido}
-            </h2>
-            <p className="text-sm text-gray-500">{user.rol}</p>
+            <h2 className="text-lg font-semibold capitalize">{fullName || "-"}</h2>
+            <p className="text-sm text-gray-500">Cliente</p>
             <p className="text-sm text-gray-500">
-              {user.direccion.ciudad}, {user.direccion.estado}
+              {user?.direccion || "-"} {estadoNombre ? `, ${estadoNombre}` : ""}
             </p>
           </div>
         </div>
@@ -109,32 +223,36 @@ const InfoSection = () => {
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Información Personal</h3>
-            {/* <button className="text-sm text-white bg-[#2B7A57] px-3 py-1 rounded hover:bg-[#247e5c]">
-              Editar
-            </button> */}
             <Button text="Editar" color="#2B7A57" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700 capitalize">
             <p>
-              <strong>Nombre:</strong> {user.nombre}
+              <strong>Nombre:</strong> {user?.pNombre || "-"}
             </p>
             <p>
-              <strong>Apellido:</strong> {user.apellido}
+              <strong>Segundo nombre:</strong> {user?.sNombre || "-"}
             </p>
             <p>
-              <strong>Cédula:</strong> {user.cedula}
+              <strong>Apellido:</strong> {user?.pApellido || "-"}
             </p>
             <p>
-              <strong>Teléfono:</strong> {user.telefono}
+              <strong>Segundo apellido:</strong> {user?.sApellido || "-"}
             </p>
             <p>
-              <strong>Correo:</strong> {user.correo}
+              <strong>Cédula:</strong> {user?.idUser?.ci || "-"}
             </p>
             <p>
-              <strong>Fecha de Nacimiento:</strong> {user.fechaNacimiento}
+              <strong>Teléfono:</strong> {user?.telefono || "-"}
             </p>
             <p>
-              <strong>Rol:</strong> {user.rol}
+              <strong>Correo:</strong> {user?.idUser?.correo || "-"}
+            </p>
+            <p>
+              <strong>Fecha de Nacimiento:</strong>{" "}
+              {user?.fechaNacimiento || "-"}
+            </p>
+            <p>
+              <strong>Sexo:</strong> {user?.sexo || "-"}
             </p>
           </div>
         </div>
@@ -143,89 +261,134 @@ const InfoSection = () => {
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Dirección</h3>
-            {/* <button className="text-sm text-white bg-[#2B7A57] px-3 py-1 rounded hover:bg-[#247e5c]">
-              Editar
-            </button> */}
             <Button text="Editar" color="#2B7A57" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
-            <p>
-              <strong>País:</strong> {user.direccion.pais}
+            <p className="md:col-span-2">
+              <strong>Dirección:</strong> {user?.direccion || "-"}
             </p>
             <p>
-              <strong>Estado:</strong> {user.direccion.estado}
-            </p>
-            <p>
-              <strong>Ciudad:</strong> {user.direccion.ciudad}
-            </p>
-            <p>
-              <strong>Código Postal:</strong> {user.direccion.codigoPostal}
+              <strong>Estado:</strong> {estadoNombre || "-"}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Información del plan en una columna */}
-      <div className="grid grid-cols-1 gap-6">
-        <div className="bg-white rounded-xl shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Información del Plan</h3>
-            <Button text="Ver detalles" color="#2B7A57" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
-            <p>
-              <strong>Plan:</strong> {plan.nombre}
-            </p>
-            <p>
-              <strong>Estado:</strong> {plan.estado}
-            </p>
-            <p>
-              <strong>Fecha de Inicio:</strong> {plan.fechaInicio}
-            </p>
-            <p>
-              <strong>Renovación:</strong> {plan.fechaRenovacion}
-            </p>
-            <p>
-              <strong>Prima Mensual:</strong> {plan.primaMensual}
-            </p>
-            <div>
-              <strong>Cobertura:</strong>
-              <ul className="list-disc pl-5 mt-1">
-                {plan.cobertura.map((c, i) => (
-                  <li key={i}>{c}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
+      {/* Pólizas */}
+      <div className="bg-white rounded-xl shadow p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Mis Pólizas</h3>
+          <Button text="Ver detalles" color="#2B7A57" />
         </div>
+
+        {polizas.length === 0 ? (
+          <div className="text-sm text-gray-600">No tienes pólizas aún.</div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {polizas.map((poliza) => {
+              const producto = poliza.producto;
+              return (
+                <div
+                  key={String(poliza.idPoliza)}
+                  className="border border-gray-200 rounded-lg p-4"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-gray-800 capitalize">
+                        {producto?.nombreComercial ||
+                          producto?.nombre ||
+                          "Producto"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Póliza #{String(poliza.idPoliza)}
+                      </p>
+                    </div>
+                    <div className="text-sm text-gray-700 items-end">
+                      <strong>Estado:</strong> {poliza.estado || "-"}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 text-sm text-gray-700">
+                    <p>
+                      <strong>Inicio:</strong> {formatDate(poliza.fechaInicio)}
+                    </p>
+                    <p>
+                      <strong>Fin:</strong> {formatDate(poliza.fechaFin)}
+                    </p>
+                    <p>
+                      <strong>Prima:</strong> {poliza.prima ?? "-"}
+                    </p>
+                    <p>
+                      <strong>Suma asegurada:</strong> {poliza.sumaAsegurada ?? "-"}
+                    </p>
+                    <p>
+                      <strong>Deducible:</strong> {poliza.deducible ?? "-"}
+                    </p>
+                  </div>
+
+                  {poliza.pagos && poliza.pagos.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-sm font-semibold text-gray-800 mb-2">
+                        Pagos de esta póliza
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {poliza.pagos.map((p) => (
+                          <div
+                            key={String(p.idPago)}
+                            className="border border-gray-100 rounded-md p-3"
+                          >
+                            <p className="text-sm text-gray-700">
+                              <strong>Fecha:</strong> {formatDate(p.fecha)}
+                            </p>
+                            <p className="text-sm text-gray-700">
+                              <strong>Monto:</strong> {formatMoney(p.monto)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Pagos anteriores (debajo) */}
+      {/* Pagos (del perfil) */}
       <div className="bg-white rounded-xl shadow p-6 mt-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Pagos Anteriores</h3>
+          <h3 className="text-lg font-semibold">Pagos</h3>
           <Button text="Ver todos" color="#2B7A57" />
         </div>
-        <div className="text-sm text-gray-700">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {pagos.map((pago, i) => (
-              <div key={i} className="border border-gray-200 rounded-lg p-4">
-                <p>
-                  <strong>Fecha:</strong> {pago.fecha}
-                </p>
-                <p>
-                  <strong>Monto:</strong> {pago.monto}
-                </p>
-                <p>
-                  <strong>Método:</strong> {pago.metodo}
-                </p>
-                <p>
-                  <strong>Estado:</strong> {pago.estado}
-                </p>
-              </div>
-            ))}
+
+        {pagos.length === 0 ? (
+          <div className="text-sm text-gray-600">No hay pagos registrados.</div>
+        ) : (
+          <div className="text-sm text-gray-700">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {pagos.map((pago) => (
+                <div
+                  key={String(pago.idPago)}
+                  className="border border-gray-200 rounded-lg p-4"
+                >
+                  <p>
+                    <strong>Fecha:</strong> {formatDate(pago.fecha)}
+                  </p>
+                  <p>
+                    <strong>Monto:</strong> {formatMoney(pago.monto)}
+                  </p>
+                  <p>
+                    <strong>Póliza:</strong>{" "}
+                    {pago.polizaId === null || pago.polizaId === undefined
+                      ? "-"
+                      : String(pago.polizaId)}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

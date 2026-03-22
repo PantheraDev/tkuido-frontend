@@ -15,7 +15,7 @@ const axiosClient = axios.create({
 // Interceptor: Inyecta el token automáticamente antes de cada petición
 axiosClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("userToken"); // O el nombre que uses para guardar el token
+    const token = localStorage.getItem("token"); // O el nombre que uses para guardar el token
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
