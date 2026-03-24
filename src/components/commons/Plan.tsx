@@ -16,6 +16,12 @@ const Plan = ({
   destacado,
   detalles,
 }: PlanProps) => {
+  const selectedPlan = { name: titulo, price: precio };
+
+  const handleSelectPlan = () => {
+    localStorage.setItem("selectedPlan", JSON.stringify(selectedPlan));
+  };
+
   return (
     <div
       className={
@@ -52,7 +58,12 @@ const Plan = ({
         ))}
       </ul>
       <div className="h-full flex flex-col justify-end">
-        <Button text="Contratar" link="/payment" />
+        <Button
+          text="Contratar"
+          link="/payment"
+          onClick={handleSelectPlan}
+          state={{ selectedPlan }}
+        />
       </div>
     </div>
   );
