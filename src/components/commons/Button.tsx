@@ -6,6 +6,7 @@ type ButtonProps = {
   color?: string;
   margin?: string;
   onClick?: () => void;
+  state?: unknown;
   className?: string;
   loading?: boolean;
   loadingText?: string;
@@ -18,6 +19,7 @@ const Button = ({
   color = "#35AE74",
   margin,
   onClick,
+  state,
   className,
   loading = false,
   loadingText,
@@ -35,6 +37,7 @@ const Button = ({
   return (
     <Link
       to={link}
+      state={state}
       style={{ backgroundColor: color, margin }}
       onClick={isDisabled ? undefined : onClick}
       className={`${baseClasses}${disabledClasses}`}
