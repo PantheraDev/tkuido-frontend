@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 
 type SelectedPlan = {
+  id?: number;
   name: string;
   price: number;
 };
