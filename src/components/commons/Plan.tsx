@@ -2,6 +2,7 @@ import Button from "./Button";
 import check from "../../assets/check.svg";
 
 type PlanProps = {
+  id: string;
   destacado?: boolean;
   titulo: string;
   precio: number;
@@ -10,13 +11,14 @@ type PlanProps = {
 };
 
 const Plan = ({
+  id,
   titulo,
   descripcion,
   precio,
   destacado,
   detalles,
 }: PlanProps) => {
-  const selectedPlan = { name: titulo, price: precio };
+  const selectedPlan = { id, name: titulo, price: precio };
 
   const handleSelectPlan = () => {
     localStorage.setItem("selectedPlan", JSON.stringify(selectedPlan));
