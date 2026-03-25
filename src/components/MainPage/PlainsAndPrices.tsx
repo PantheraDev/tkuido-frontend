@@ -14,6 +14,7 @@ const PlainsAndPrices = () => {
         {plans.map((plan, index) => (
           <Plan
             key={index}
+            id={plan.id}
             titulo={plan.titulo}
             precio={plan.precio}
             descripcion={plan.descripcion}
@@ -30,6 +31,7 @@ export default PlainsAndPrices;
 
 const plans = [
   {
+    id: "1",
     titulo: "Telemedicina",
     precio: 3,
     destacado: false,
@@ -37,10 +39,11 @@ const plans = [
     detalles: [
       "Acceso a récipe e informe médico digital",
       "Seguimiento y acompañamiento post asistencia",
-      "Atención sanitaria primaria prestada a distancia"
+      "Atención sanitaria primaria prestada a distancia",
     ],
   },
   {
+    id: "2",
     titulo: "Plan Premium",
     precio: 16,
     destacado: true,
@@ -52,14 +55,11 @@ const plans = [
     ],
   },
   {
+    id: "3",
     titulo: "Plan Oro",
     precio: 3.25,
     destacado: false,
     descripcion: "Fúnebres",
-    detalles: [
-      "Velatorio en capilla",
-      "Cremación",
-      "Ataúd Standard"
-    ],
+    detalles: ["Velatorio en capilla", "Cremación", "Ataúd Standard"],
   },
 ];
