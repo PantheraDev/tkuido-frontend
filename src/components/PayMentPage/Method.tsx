@@ -1,7 +1,20 @@
-import { useState } from "react";
+import PagoMovilProcessor from "./PagoMovilProcessor";
 
-const Method = () => {
-  const [paymentMethod, setPaymentMethod] = useState("nacional"); // nacional, internacional, pagomovil
+type PaymentMethod = "nacional" | "internacional" | "pagomovil";
+
+type MethodProps = {
+  paymentMethod: PaymentMethod;
+  onPaymentMethodChange: (method: PaymentMethod) => void;
+  paymentFormId: string;
+  onPagoMovilValidityChange: (isValid: boolean) => void;
+};
+
+const Method = ({
+  paymentMethod,
+  onPaymentMethodChange,
+  paymentFormId,
+  onPagoMovilValidityChange,
+}: MethodProps) => {
   return (
     <>
       {/* Selector de Método - SIN ÍCONOS */}
@@ -13,7 +26,7 @@ const Method = () => {
         ].map((m) => (
           <button
             key={m.id}
-            onClick={() => setPaymentMethod(m.id)}
+            onClick={() => onPaymentMethodChange(m.id as PaymentMethod)}
             className={`flex-1 flex items-center justify-center py-2 text-sm font-medium rounded-md transition-all ${
               paymentMethod === m.id
                 ? "bg-white shadow text-emerald-700"
@@ -108,39 +121,10 @@ const Method = () => {
         )}
 
         {paymentMethod === "pagomovil" && (
-          <div className="space-y-4 animate-fadeIn">
-            <div className="bg-gray-50 p-4 rounded-lg text-center mb-4 border border-gray-200">
-              <p className="text-sm text-gray-500">
-                Realiza el pago a los siguientes datos:
-              </p>
-              <p className="font-bold text-lg text-gray-800 mt-2">
-                0105 - Mercantil
-              </p>
-              <p className="text-gray-800">0414-123-4567</p>
-              <p className="text-gray-800">J-123456789</p>
-            </div>
-            <label className="block text-sm font-bold text-gray-700">
-              Reportar Pago
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              <select className="w-full border p-3 rounded-lg bg-white">
-                <option>Banco Mercantil</option>
-                <option>Banesco</option>
-                <option>Banco de Venezuela</option>
-              </select>
-              <input
-                type="text"
-                placeholder="Teléfono de origen"
-                className="w-full border p-3 rounded-lg"
-              />
-            </div>
-            <input
-              type="text"
-              placeholder="Número de Referencia (Últimos 4 o 6 dígitos)"
-              className="w-full border p-3 rounded-lg"
-            />
-            <input type="date" className="w-full border p-3 rounded-lg" />
-          </div>
+          <PagoMovilProcessor
+            formId={paymentFormId}
+            onFormValidityChange={onPagoMovilValidityChange}
+          />
         )}
       </div>
     </>
