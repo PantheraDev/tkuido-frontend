@@ -1,19 +1,29 @@
 import PagoMovilProcessor from "./PagoMovilProcessor";
+import TarjetaNacionalProcessor from "./TarjetaNacionalProcessor";
+import TarjetaInternacionalProcessor from "./TarjetaInternacionalProcessor";
 
 type PaymentMethod = "nacional" | "internacional" | "pagomovil";
 
 type MethodProps = {
   paymentMethod: PaymentMethod;
   onPaymentMethodChange: (method: PaymentMethod) => void;
-  paymentFormId: string;
+  pagoMovilFormId: string;
+  nacionalFormId: string;
+  internacionalFormId: string;
   onPagoMovilValidityChange: (isValid: boolean) => void;
+  onNacionalValidityChange: (isValid: boolean) => void;
+  onInternacionalValidityChange: (isValid: boolean) => void;
 };
 
 const Method = ({
   paymentMethod,
   onPaymentMethodChange,
-  paymentFormId,
+  pagoMovilFormId,
+  nacionalFormId,
+  internacionalFormId,
   onPagoMovilValidityChange,
+  onNacionalValidityChange,
+  onInternacionalValidityChange,
 }: MethodProps) => {
   return (
     <>
@@ -41,88 +51,22 @@ const Method = ({
       {/* Formulario Dinámico según Selección */}
       <div className="bg-white p-6 border rounded-xl">
         {paymentMethod === "nacional" && (
-          <div className="space-y-4 animate-fadeIn">
-            <div className="bg-blue-50 text-blue-800 text-sm p-3 rounded-lg mb-4">
-              Aceptamos Débito y Crédito Nacional (Mercantil, Banesco, etc).
-            </div>
-            <input
-              type="text"
-              placeholder="Número de Tarjeta (16 dígitos)"
-              className="w-full border p-3 rounded-lg"
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="MM/AA"
-                className="w-full border p-3 rounded-lg"
-              />
-              <input
-                type="text"
-                placeholder="CVC"
-                className="w-full border p-3 rounded-lg"
-              />
-            </div>
-            <input
-              type="text"
-              placeholder="Cédula del Titular"
-              className="w-full border p-3 rounded-lg"
-            />
-            <input
-              type="text"
-              placeholder="Nombre del Titular"
-              className="w-full border p-3 rounded-lg"
-            />
-            <input
-              type="text"
-              placeholder="Apellido del Titular"
-              className="w-full border p-3 rounded-lg"
-            />
-          </div>
+          <TarjetaNacionalProcessor
+            formId={nacionalFormId}
+            onFormValidityChange={onNacionalValidityChange}
+          />
         )}
 
         {paymentMethod === "internacional" && (
-          <div className="space-y-4 animate-fadeIn">
-            <div className="bg-purple-50 text-purple-800 text-sm p-3 rounded-lg mb-4">
-              Procesado vía Stripe/PayPal en USD.
-            </div>
-            <input
-              type="text"
-              placeholder="Card Number"
-              className="w-full border p-3 rounded-lg"
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="MM/YY"
-                className="w-full border p-3 rounded-lg"
-              />
-              <input
-                type="text"
-                placeholder="CVC"
-                className="w-full border p-3 rounded-lg"
-              />
-            </div>
-            <input
-              type="text"
-              placeholder="Cardholder Name"
-              className="w-full border p-3 rounded-lg"
-            />
-            <input
-              type="text"
-              placeholder="DNI / Passport"
-              className="w-full border p-3 rounded-lg"
-            />
-            <input
-              type="text"
-              placeholder="Description"
-              className="w-full border p-3 rounded-lg"
-            />
-          </div>
+          <TarjetaInternacionalProcessor
+            formId={internacionalFormId}
+            onFormValidityChange={onInternacionalValidityChange}
+          />
         )}
 
         {paymentMethod === "pagomovil" && (
           <PagoMovilProcessor
-            formId={paymentFormId}
+            formId={pagoMovilFormId}
             onFormValidityChange={onPagoMovilValidityChange}
           />
         )}
