@@ -9,8 +9,27 @@ const PayMent = () => {
     "nacional" | "internacional" | "pagomovil"
   >("nacional");
   const [isPagoMovilFormValid, setIsPagoMovilFormValid] = useState(false);
+  const [isNacionalFormValid, setIsNacionalFormValid] = useState(false);
+  const [isInternacionalFormValid, setIsInternacionalFormValid] =
+    useState(false);
 
-  const paymentFormId = "pagomovil-payment-form";
+  const pagoMovilFormId = "pagomovil-payment-form";
+  const nacionalFormId = "nacional-payment-form";
+  const internacionalFormId = "internacional-payment-form";
+
+  const activeFormId =
+    paymentMethod === "pagomovil"
+      ? pagoMovilFormId
+      : paymentMethod === "nacional"
+        ? nacionalFormId
+        : internacionalFormId;
+
+  const isActiveFormValid =
+    paymentMethod === "pagomovil"
+      ? isPagoMovilFormValid
+      : paymentMethod === "nacional"
+        ? isNacionalFormValid
+        : isInternacionalFormValid;
 
   return (
     <>
@@ -22,8 +41,12 @@ const PayMent = () => {
             <Method
               paymentMethod={paymentMethod}
               onPaymentMethodChange={setPaymentMethod}
-              paymentFormId={paymentFormId}
+              pagoMovilFormId={pagoMovilFormId}
+              nacionalFormId={nacionalFormId}
+              internacionalFormId={internacionalFormId}
               onPagoMovilValidityChange={setIsPagoMovilFormValid}
+              onNacionalValidityChange={setIsNacionalFormValid}
+              onInternacionalValidityChange={setIsInternacionalFormValid}
             />
           </div>
           {/* Columna Derecha: Resumen */}
@@ -32,20 +55,13 @@ const PayMent = () => {
             <div className="mt-6">
               <button
                 type="submit"
-                form={paymentFormId}
-                disabled={
-                  paymentMethod !== "pagomovil" || !isPagoMovilFormValid
-                }
+                form={activeFormId}
+                disabled={!activeFormId || !isActiveFormValid}
                 className="w-full h-12 rounded-xl bg-[#2B7A57] text-white font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 Proceder al Pago
               </button>
-              {paymentMethod !== "pagomovil" && (
-                <p className="text-xs text-gray-500 mt-2">
-                  Para continuar, selecciona el metodo Pago Movil.
-                </p>
-              )}
-              {paymentMethod === "pagomovil" && !isPagoMovilFormValid && (
+              {!isActiveFormValid && (
                 <p className="text-xs text-gray-500 mt-2">
                   Completa los campos requeridos para habilitar el pago.
                 </p>
