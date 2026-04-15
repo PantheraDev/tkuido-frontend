@@ -29,14 +29,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserPayload | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const appBase = import.meta.env.BASE_URL || "/";
 
   //const navigate = useNavigate();
   const logout = useCallback(() => {
     localStorage.removeItem("token");
     setUser(null);
 
-    window.location.href = "/tkuido-frontend/";
-  }, []);
+    window.location.href = appBase;
+  }, [appBase]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
