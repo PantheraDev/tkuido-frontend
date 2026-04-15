@@ -3,8 +3,8 @@ import axios from 'axios';
 const api = axios.create({
   baseURL:
     typeof window !== 'undefined' && window.location.protocol === 'https:'
-      ? 'https://148.113.172.29'
-      : 'http://148.113.172.29', // Ajusta al dominio de tu server
+      ? 'https://tkuido.exatronclouds.com'
+      : 'http://tkuido.exatronclouds.com', // Ajusta al dominio de tu server
   headers: {
     'Content-Type': 'application/json',
     'accept': '*/*'
@@ -27,10 +27,16 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Si la API dice que el token no sirve, limpiamos y redirigimos
+    const status = error.response?.status;
+    const requestUrl = String(error.config?.url ?? "");
+    const isLoginRequest = /(^|\/)login(\?|$)/.test(requestUrl);
+
+    if (status === 401 && !isLoginRequest) {
+      // Si la API dice que el token no sirve, limpiamos y redirigimos al root del app.
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      const base = import.meta.env.BASE_URL || '/';
+      const normalizedBase = base.endsWith('/') ? base : `${base}/`;
+      window.location.href = normalizedBase;
     }
     return Promise.reject(error);
   }
