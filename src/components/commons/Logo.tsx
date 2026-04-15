@@ -1,10 +1,11 @@
 import logo from "../../assets/Logo.png";
+import { Link } from "react-router-dom";
 
 const Logo = ({ className }: { className?: string }) => {
   const font = "Avenir Black";
 
   return (
-    <a href="/" className={`flex items-center gap-2 ${className}`}>
+    <Link to="/" className={`flex items-center gap-2 ${className}`}>
       <img src={logo} alt="TKUIDO Logo" className="h-15" />
       <div className="flex flex-col">
         <span
@@ -20,7 +21,7 @@ const Logo = ({ className }: { className?: string }) => {
           Contigo y por ti
         </span>
       </div>
-    </a>
+    </Link>
   );
 };
 
