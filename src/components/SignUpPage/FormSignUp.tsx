@@ -1,4 +1,3 @@
-import Button from "../commons/Button";
 import InputForm from "../commons/InputForm";
 import mail from "../../assets/email_icon.png";
 import lock from "../../assets/lock_icon.png";
@@ -78,6 +77,7 @@ const FormSignUp = () => {
     papellido: "",
     sapellido: "",
     telefono: "",
+    nacionalidad: "",
     ci: "",
     sexo: "",
     fechaNacimiento: "",
@@ -167,6 +167,7 @@ const FormSignUp = () => {
       !form.pnombre ||
       !form.papellido ||
       !form.telefono ||
+      !form.nacionalidad ||
       !form.ci ||
       !form.sexo ||
       !form.fechaNacimiento ||
@@ -187,7 +188,7 @@ const FormSignUp = () => {
     try {
       // 1) Registrar usuario
       const usuarioPayload: Usuario = {
-        ci: form.ci,
+        ci: `${form.nacionalidad}${form.ci}`,
         correo: form.correo,
         password: form.password,
         fk_rol: "1", // rol cliente
@@ -223,7 +224,7 @@ const FormSignUp = () => {
 
       await execCliente({ data: clientePayload });
       setSubmitSuccess("Registro exitoso. Redirigiendo al login...");
-      setTimeout(() => navigate("/login"), 1200);
+      navigate("/login", { replace: true });
     } catch (err) {
       const axiosErr = err as AxiosError<{ message?: string; error?: string }>;
       const serverMsg =
@@ -251,7 +252,7 @@ const FormSignUp = () => {
     <div className="w-full lg:w-1/2 p-5 xl:px-25 lg:px-10 md:px-25 h-fit">
       <div className="">
         <span className="text-[#2B7A57] font-bold text-3xl">
-          <Link to={"/tkuido-frontend/"}>TKUIDO</Link>
+          <Link to={"/"}>TKUIDO</Link>
         </span>
         {/* <img src="/logo.svg" alt="TKUIDO Logo" className="w-20 mb-4" /> */}
         <h2 className="resp-h2 mb-6">Regístrate</h2>
@@ -312,6 +313,36 @@ const FormSignUp = () => {
               value={form.telefono}
               onChange={handleChange}
             />
+          </div>
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-900">
+              Nacionalidad<span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <img
+                src={id}
+                alt="Nacionalidad icono"
+                className="absolute top-1/2 left-3 transform -translate-y-1/2 w-5 h-5"
+              />
+              <select
+                name="nacionalidad"
+                value={form.nacionalidad}
+                onChange={handleChange}
+                required
+                className="text-sm lg:text-base pl-10 pr-4 py-2 w-full bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
+              >
+                <option value="" disabled>
+                  Selecciona nacionalidad
+                </option>
+                <option value="V">Venezolano</option>
+                <option value="E">Extranjero</option>
+                <option value="P">Pasaporte</option>
+                <option value="J">Jurídico</option>
+                <option value="C">Comuna</option>
+                <option value="G">Gubernamental</option>
+                <option value="R">Firma Personal</option>
+              </select>
+            </div>
           </div>
           <div>
             <InputForm
@@ -460,16 +491,13 @@ const FormSignUp = () => {
           </div>
 
           <div className="flex flex-col col-[1/3]">
-            <Button
-              text="Registrarse"
-              onClick={() => handleSubmit()}
-              color="#2B7A57"
-              link="#"
-              className="flex items-center justify-center text-white font-semibold text-base px-6 h-12 rounded-xl transition"
-              loading={isSubmitting}
-              loadingText="Registrando..."
+            <button
+              type="submit"
               disabled={isSubmitting}
-            />
+              className="flex items-center justify-center text-white font-semibold text-base px-6 h-12 rounded-xl transition bg-[#2B7A57] hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? "Registrando..." : "Registrarse"}
+            </button>
           </div>
 
           {submitError && (
