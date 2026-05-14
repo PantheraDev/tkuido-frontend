@@ -2,7 +2,7 @@ import familia from "../../assets/Familia.png";
 
 const AboutUs = () => {
   return (
-    <section className="container mx-auto py-10 lg:py-16">
+    <section id="sobre-nosotros" className="container mx-auto py-10 lg:py-16">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         <div>
           <span className="uppercase text-sm text-[#2B7A57] font-semibold tracking-wide">

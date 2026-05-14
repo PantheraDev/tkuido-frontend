@@ -6,6 +6,7 @@ import { useAuth } from "../../hook/useAuthActions";
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+  const getSectionHref = (id: string) => `${import.meta.env.BASE_URL}#${id}`;
 
   const toggleMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -21,13 +22,13 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-6 text-gray-700 font-medium">
-          {menu.map((item, index) => (
+          {menu.map((item) => (
             <a
-              key={index}
-              href={`#${item.toLowerCase().replace(/\s/g, "-")}`}
+              key={item.id}
+              href={getSectionHref(item.id)}
               className="py-2 hover:text-[#35AE74] hover:border-b-2 border-[#2B7A57] transition"
             >
-              {item}
+              {item.label}
             </a>
           ))}
         </nav>
@@ -62,13 +63,14 @@ const Header = () => {
         }`}
       >
         <div className="flex flex-col gap-2">
-          {menu.map((item, index) => (
+          {menu.map((item) => (
             <a
-              key={index}
-              href={`#${item.toLowerCase().replace(/\s/g, "-")}`}
+              key={item.id}
+              href={getSectionHref(item.id)}
+              onClick={() => setMobileMenuOpen(false)}
               className="py-2 text-gray-700 hover:text-[#2B7A57] border-b"
             >
-              {item}
+              {item.label}
             </a>
           ))}
           <div className="flex flex-col gap-2 pt-2">
@@ -90,11 +92,11 @@ const Header = () => {
 export default Header;
 
 const menu = [
-  "Servicios",
-  "Planes",
-  "Sobre Nosotros",
-  "Preguntas Frecuentes",
-  "Contacto",
+  { label: "Servicios", id: "services" },
+  { label: "Planes", id: "planes" },
+  { label: "Sobre Nosotros", id: "sobre-nosotros" },
+  { label: "Preguntas Frecuentes", id: "preguntas-frecuentes" },
+  { label: "Contacto", id: "contacto" },
 ];
 
 // <!-- Script para toggle -->

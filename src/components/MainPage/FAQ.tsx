@@ -2,7 +2,7 @@ import FAQCard from "../commons/FAQCard";
 
 const FAQ = () => {
   return (
-    <section className="container mx-auto py-10  text-gray-800 lg:py-16" id="faq">
+    <section className="container mx-auto py-10  text-gray-800 lg:py-16" id="preguntas-frecuentes">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-12 items-start ">
         <div className="lg:col-[2/3]">
           <span className="text-sm uppercase text-[#2B7A57] font-semibold">

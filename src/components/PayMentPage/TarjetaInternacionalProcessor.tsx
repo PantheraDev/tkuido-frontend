@@ -2,8 +2,10 @@ import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import {
   createTdcInternacional,
+  getInternacionalPaymentStatus,
   getPerfilByUserId,
   resolveClienteDataFromPerfil,
+  type InternacionalPaymentStatusResponse,
   type TdcInternacionalResponse,
 } from "../../api/payment";
 
@@ -73,6 +75,10 @@ const TarjetaInternacionalProcessor = ({
   );
   const [showActionsModal, setShowActionsModal] = useState(false);
   const [externalTabLoading, setExternalTabLoading] = useState(false);
+  const [validationLoading, setValidationLoading] = useState(false);
+  const [validationError, setValidationError] = useState("");
+  const [paymentValidation, setPaymentValidation] =
+    useState<InternacionalPaymentStatusResponse | null>(null);
 
   const tabWatcherRef = useRef<number | null>(null);
 
@@ -109,10 +115,10 @@ const TarjetaInternacionalProcessor = ({
     onFormValidityChange(isFormValid);
   }, [isFormValid, onFormValidityChange]);
 
-  const watchTabUntilClose = (tab: Window | null) => {
+  const watchTabUntilClose = (tab: Window | null, onClose?: () => void) => {
     if (!tab) {
       setError(
-        "El navegador bloqueo la nueva pestana. Habilita popups e intenta de nuevo.",
+        "El navegador bloqueó la nueva pestaña. Habilita popups e intenta de nuevo.",
       );
       return;
     }
@@ -130,18 +136,43 @@ const TarjetaInternacionalProcessor = ({
           tabWatcherRef.current = null;
         }
         setExternalTabLoading(false);
+        onClose?.();
       }
     }, 700);
   };
 
-  const handleOpenFlowTab = (url: string | undefined) => {
+  const handleContinue = () => {
+    const url = response?.CallbackUrl ?? response?.url;
     if (!url) {
-      setError("La respuesta no contiene URL para abrir.");
+      setError("La respuesta no contiene URL para continuar el pago.");
       return;
     }
 
+    const orderId = response?.ordenID ?? response?.idPago;
+    if (!orderId) {
+      setError("No se encontró el ID de orden para validar el pago.");
+      return;
+    }
+
+    setShowActionsModal(false);
+
     const newTab = window.open(url, "_blank");
-    watchTabUntilClose(newTab);
+
+    watchTabUntilClose(newTab, async () => {
+      try {
+        setValidationLoading(true);
+        setValidationError("");
+        const status = await getInternacionalPaymentStatus(String(orderId));
+        console.log("Estado pago internacional:", status);
+        setPaymentValidation(status);
+      } catch {
+        setValidationError(
+          "No se pudo verificar el estado del pago. Revisa tu historial de pagos.",
+        );
+      } finally {
+        setValidationLoading(false);
+      }
+    });
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -264,39 +295,31 @@ const TarjetaInternacionalProcessor = ({
       </form>
 
       {showActionsModal && response && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-800">
-              Acciones de Pago Internacional
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-gray-800">
+              Confirmar Pago Internacional
             </h3>
-            <p className="mt-2 text-sm text-gray-600">
-              idPago: {response.idPago}. Abre una opcion para continuar el
-              flujo.
+            <p className="mt-2 text-sm text-gray-500">
+              Tu solicitud fue iniciada correctamente. ¿Deseas proceder con el
+              pago ahora?
             </p>
 
-            <div className="mt-4 grid grid-cols-1 gap-3">
+            <div className="mt-6 flex gap-3">
               <button
                 type="button"
-                onClick={() => handleOpenFlowTab(response.CallbackUrl)}
-                className="h-11 rounded-lg bg-[#2B7A57] text-white font-semibold"
+                onClick={handleContinue}
+                className="flex-1 h-11 rounded-xl bg-[#2B7A57] text-white font-semibold hover:bg-[#245f44] transition"
               >
-                Abrir CallbackUrl
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleOpenFlowTab(response.CallbackUrlCancel)}
-                className="h-11 rounded-lg border border-gray-300 text-gray-700 font-semibold"
-              >
-                Abrir Cancelacion
+                Continuar
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowActionsModal(false)}
-                className="h-10 rounded-lg text-sm text-gray-500"
+                className="flex-1 h-11 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition"
               >
-                Cerrar
+                Cancelar
               </button>
             </div>
           </div>
@@ -304,13 +327,44 @@ const TarjetaInternacionalProcessor = ({
       )}
 
       {externalTabLoading && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/35 p-4">
-          <div className="rounded-xl bg-white p-6 shadow-xl text-center min-w-[280px]">
-            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-[#2B7A57]" />
-            <p className="mt-3 text-sm text-gray-700">
-              Esperando que cierres la pestana del flujo de pago...
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+          <div className="rounded-2xl bg-white p-8 shadow-2xl text-center min-w-[300px]">
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-gray-100 border-t-[#2B7A57]" />
+            <p className="mt-4 text-sm font-medium text-gray-700">
+              Esperando que completes el pago...
+            </p>
+            <p className="mt-1 text-xs text-gray-400">
+              Cierra la pestaña cuando finalices para continuar.
             </p>
           </div>
+        </div>
+      )}
+
+      {validationLoading && (
+        <p className="text-sm text-gray-500 mt-2">
+          Verificando estado del pago internacional...
+        </p>
+      )}
+
+      {validationError && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
+          {validationError}
+        </p>
+      )}
+
+      {paymentValidation && !validationLoading && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mt-2">
+          <p className="text-sm font-semibold text-emerald-700">
+            Pago verificado
+          </p>
+          <p className="text-xs text-emerald-600 mt-1">
+            Estado:{" "}
+            {typeof paymentValidation.Status === "string"
+              ? paymentValidation.Status
+              : typeof paymentValidation.status === "string"
+                ? paymentValidation.status
+                : "Revisado correctamente"}
+          </p>
         </div>
       )}
     </div>

@@ -2,7 +2,7 @@ import Plan from "../commons/Plan";
 
 const PlainsAndPrices = () => {
   return (
-    <section className="py-16 bg-white text-gray-800">
+    <section id="planes" className="py-16 bg-white text-gray-800">
       <div className="text-center mb-12">
         <h2 className="resp-h2 mb-2">Planes y Precios</h2>
         <p className="resp-p">

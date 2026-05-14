@@ -159,6 +159,19 @@ export const createTdcInternacional = async (
   return data;
 };
 
+export type InternacionalPaymentStatusResponse = {
+  [key: string]: unknown;
+};
+
+export const getInternacionalPaymentStatus = async (
+  orderId: string,
+): Promise<InternacionalPaymentStatusResponse> => {
+  const { data } = await axiosClient.get<InternacionalPaymentStatusResponse>(
+    `/international-pay/${orderId}`,
+  );
+  return data;
+};
+
 type ProcessPaymentParams = {
   pagoMovil: PagoMovilPayload;
   polizaBase: Omit<PolizaPayload, "idPago">;

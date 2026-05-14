@@ -6,7 +6,7 @@ import rcv from "../../assets/RCV.png";
 
 const Services = () => {
   return (
-    <section className="bg-white py-10 px-5 lg:px-30">
+    <section id="services" className="bg-white py-10 px-5 lg:px-30">
       <h2 className="resp-h2 text-gray-900 mb-10 text-center lg:mb-10">
         Nuestros Servicios
       </h2>
