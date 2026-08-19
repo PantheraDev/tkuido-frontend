@@ -9,7 +9,7 @@ import ticket from "../../assets/ticket_icon.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useAxios } from "../../hook/useAxios";
 import { useEffect, useState, useCallback } from "react";
-import type { AxiosError } from "axios";
+import { normalizeApiError } from "../../api/errors";
 
 type Usuario = {
   ci: string;
@@ -142,8 +142,9 @@ const FormSignUp = () => {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // `execEstados` ahora es estable (useAxios lo memoiza por `url`), así
+    // que es seguro incluirlo sin causar loops.
+  }, [execEstados, normalizeOptions]);
 
   useEffect(() => {
     // lugar = id del estado seleccionado (se envía como string)
@@ -197,8 +198,6 @@ const FormSignUp = () => {
 
       const usuarioRes = await execUser({ data: usuarioPayload });
       const userId = usuarioRes?.user.idUser;
-      console.log(userId);
-      console.log(usuarioRes.user.idUser);
       if (!userId) {
         throw new Error("No se pudo obtener el ID del usuario creado.");
       }
@@ -226,22 +225,13 @@ const FormSignUp = () => {
       setSubmitSuccess("Registro exitoso. Redirigiendo al login...");
       navigate("/login", { replace: true });
     } catch (err) {
-      const axiosErr = err as AxiosError<{ message?: string; error?: string }>;
-      const serverMsg =
-        axiosErr.response?.data?.message || axiosErr.response?.data?.error;
-      const status = axiosErr.response?.status;
-      const isDuplicate =
-        status === 400 &&
-        typeof serverMsg === "string" &&
-        serverMsg.toLowerCase().includes("duplicate key value");
+      const serverMsg = normalizeApiError(err, "Error al registrar. Intenta nuevamente.");
+      const isDuplicate = serverMsg.toLowerCase().includes("duplicate key value");
       const friendlyMsg = isDuplicate
         ? "Ya existe un usuario con esos datos (correo o cédula). Usa otros datos o inicia sesión."
-        : serverMsg || "Error al registrar. Intenta nuevamente.";
+        : serverMsg;
 
-      console.error("Registro fallido", {
-        status,
-        data: axiosErr.response?.data,
-      });
+      console.error("Registro fallido", err);
       setSubmitError(friendlyMsg);
     } finally {
       setIsSubmitting(false);
@@ -315,16 +305,21 @@ const FormSignUp = () => {
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-900">
+            <label
+              htmlFor="signup-nacionalidad"
+              className="block mb-1 text-sm font-medium text-gray-900"
+            >
               Nacionalidad<span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <img
                 src={id}
-                alt="Nacionalidad icono"
+                alt=""
+                aria-hidden="true"
                 className="absolute top-1/2 left-3 transform -translate-y-1/2 w-5 h-5"
               />
               <select
+                id="signup-nacionalidad"
                 name="nacionalidad"
                 value={form.nacionalidad}
                 onChange={handleChange}
@@ -358,16 +353,21 @@ const FormSignUp = () => {
           </div>
 
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-900">
+            <label
+              htmlFor="signup-sexo"
+              className="block mb-1 text-sm font-medium text-gray-900"
+            >
               Sexo<span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <img
                 src={id}
-                alt="Sexo icono"
+                alt=""
+                aria-hidden="true"
                 className="absolute top-1/2 left-3 transform -translate-y-1/2 w-5 h-5"
               />
               <select
+                id="signup-sexo"
                 name="sexo"
                 value={form.sexo}
                 onChange={handleChange}
@@ -399,16 +399,21 @@ const FormSignUp = () => {
 
           <div className="col-[1/3] grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="col-span-2">
-              <label className="block mb-1 text-sm font-medium text-gray-900">
+              <label
+                htmlFor="signup-idEstado"
+                className="block mb-1 text-sm font-medium text-gray-900"
+              >
                 Estado<span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <img
                   src={id}
-                  alt="Estado icono"
+                  alt=""
+                  aria-hidden="true"
                   className="absolute top-1/2 left-3 transform -translate-y-1/2 w-5 h-5"
                 />
                 <select
+                  id="signup-idEstado"
                   name="idEstado"
                   value={form.idEstado}
                   onChange={handleChange}

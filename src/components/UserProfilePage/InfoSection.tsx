@@ -1,13 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAxios } from "../../hook/useAxios";
 import Button from "../commons/Button";
-import { jwtDecode } from "jwt-decode";
-
-type JwtPayload = {
-  id?: string | number;
-  sub?: string | number;
-  idUser?: string | number;
-};
+import { getUserIdFromToken } from "../../utils/auth";
 
 type Lugar = {
   idLugar: number | string;
@@ -37,13 +31,6 @@ type Pago = {
   polizaId?: number | string | null;
 };
 
-type PolizaPago = {
-  idPago: number | string;
-  fecha?: string;
-  monto?: string | number;
-  polizaId?: number | string | null;
-};
-
 type Poliza = {
   idPoliza: number | string;
   fechaInicio?: string;
@@ -54,7 +41,7 @@ type Poliza = {
   estado?: string;
   rutaDocumento?: string;
   producto?: Producto | null;
-  pagos?: PolizaPago[];
+  pagos?: Pago[];
 };
 
 type ClientePerfil = {
@@ -89,26 +76,7 @@ const InfoSection = () => {
     let cancelled = false;
 
     const fetchPerfil = async () => {
-      const userIdFromStorage = localStorage.getItem("userId");
-      let userId: string | null = userIdFromStorage;
-
-      // Fallback: intenta extraer el id del JWT si no existe userId en storage
-      if (!userId) {
-        const token = localStorage.getItem("token");
-        if (token) {
-          try {
-            const decoded = jwtDecode<JwtPayload>(token);
-            const candidate = decoded?.id ?? decoded?.sub ?? decoded?.idUser;
-            if (candidate !== undefined && candidate !== null) {
-              userId = String(candidate);
-              localStorage.setItem("userId", userId);
-            }
-          } catch {
-            // noop
-          }
-        }
-      }
-
+      const userId = getUserIdFromToken();
       if (!userId) return;
 
       try {
@@ -118,7 +86,6 @@ const InfoSection = () => {
 
         if (!cancelled) {
           setUser(response);
-          console.log("Respuesta del servidor:", response);
         }
       } catch (e) {
         if (!cancelled) console.error(e);
@@ -130,10 +97,9 @@ const InfoSection = () => {
     return () => {
       cancelled = true;
     };
-    // `execute` cambia de referencia (por cómo está implementado useAxios),
-    // así que lo omitimos para evitar loops.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // `execute` ahora es estable (useAxios lo memoiza por `url`), así que es
+    // seguro incluirlo sin causar loops.
+  }, [execute]);
 
   const fullName = useMemo(() => {
     if (!user) return "";
@@ -223,7 +189,7 @@ const InfoSection = () => {
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Información Personal</h3>
-            <Button text="Editar" color="#2B7A57" />
+            <Button text="Editar" color="#2B7A57" disabled title="Próximamente" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700 capitalize">
             <p>
@@ -261,7 +227,7 @@ const InfoSection = () => {
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Dirección</h3>
-            <Button text="Editar" color="#2B7A57" />
+            <Button text="Editar" color="#2B7A57" disabled title="Próximamente" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
             <p className="md:col-span-2">
@@ -278,7 +244,7 @@ const InfoSection = () => {
       <div className="bg-white rounded-xl shadow p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Mis Pólizas</h3>
-          <Button text="Ver detalles" color="#2B7A57" />
+          <Button text="Ver detalles" color="#2B7A57" disabled title="Próximamente" />
         </div>
 
         {polizas.length === 0 ? (
@@ -359,7 +325,7 @@ const InfoSection = () => {
       <div className="bg-white rounded-xl shadow p-6 mt-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Pagos</h3>
-          <Button text="Ver todos" color="#2B7A57" />
+          <Button text="Ver todos" color="#2B7A57" disabled title="Próximamente" />
         </div>
 
         {pagos.length === 0 ? (

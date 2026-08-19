@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 type InputFormProps = {
   title: string;
   placeholder: string;
@@ -20,20 +22,28 @@ const InputForm = ({
   value,
   onChange,
 }: InputFormProps) => {
+  const generatedId = useId();
+  const inputId = name ? `${name}-${generatedId}` : generatedId;
+
   return (
     <div className="">
-      <label className="block mb-1 text-sm font-medium text-gray-900">
+      <label
+        htmlFor={inputId}
+        className="block mb-1 text-sm font-medium text-gray-900"
+      >
         {title}
         {required && <span className="text-red-500">*</span>}
       </label>
       <div className="relative">
         <img
           src={img}
-          alt={title + " icono"}
+          alt=""
+          aria-hidden="true"
           className="absolute top-1/2 left-3 transform -translate-y-1/2 w-5 h-5"
         />
 
         <input
+          id={inputId}
           name={name}
           value={value}
           onChange={onChange}

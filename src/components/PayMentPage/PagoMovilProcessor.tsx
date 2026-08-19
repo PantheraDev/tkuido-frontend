@@ -1,71 +1,23 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { jwtDecode } from "jwt-decode";
 import {
   getPerfilByUserId,
   processPagoMovilAndCreatePoliza,
   resolveClienteDataFromPerfil,
 } from "../../api/payment";
-
-type SelectedPlan = {
-  id?: number;
-  name: string;
-  price: number;
-};
-
-const getSelectedPlan = (): SelectedPlan | null => {
-  const raw = localStorage.getItem("selectedPlan");
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw) as SelectedPlan;
-    if (parsed?.name && typeof parsed.price === "number") {
-      return parsed;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-};
-
-const formatDate = (date: Date): string => {
-  return date.toISOString().split("T")[0];
-};
-
-const getOneYearAfter = (dateString: string): string => {
-  const base = new Date(dateString);
-  const end = new Date(base);
-  end.setFullYear(base.getFullYear() + 1);
-  return formatDate(end);
-};
+import { getUserIdFromToken } from "../../utils/auth";
+import { formatDate, getOneYearAfter } from "../../utils/date";
+import { useSelectedPlan } from "../../hook/useSelectedPlan";
 
 type PagoMovilProcessorProps = {
   formId: string;
   onFormValidityChange: (isValid: boolean) => void;
-};
-
-type JwtPayload = {
-  id?: string | number;
-  sub?: string | number;
-  idUser?: string | number;
-};
-
-const getUserIdFromToken = (): string | null => {
-  const token = localStorage.getItem("token");
-  if (!token) return null;
-
-  try {
-    const decoded = jwtDecode<JwtPayload>(token);
-    const candidate = decoded?.sub ?? decoded?.id ?? decoded?.idUser;
-    if (candidate === undefined || candidate === null) return null;
-    return String(candidate);
-  } catch {
-    return null;
-  }
+  onSubmittingChange: (isSubmitting: boolean) => void;
 };
 
 const PagoMovilProcessor = ({
   formId,
   onFormValidityChange,
+  onSubmittingChange,
 }: PagoMovilProcessorProps) => {
   const [bank, setBank] = useState("0105");
   const [phonePrefix, setPhonePrefix] = useState("0414");
@@ -77,7 +29,7 @@ const PagoMovilProcessor = ({
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  const selectedPlan = useMemo(() => getSelectedPlan(), []);
+  const selectedPlan = useSelectedPlan();
 
   const buildPhoneForApi = (): string => {
     const prefix = phonePrefix.replace(/^0/, "");
@@ -101,6 +53,10 @@ const PagoMovilProcessor = ({
     onFormValidityChange(isFormValid);
   }, [isFormValid, onFormValidityChange]);
 
+  useEffect(() => {
+    onSubmittingChange(loading);
+  }, [loading, onSubmittingChange]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
@@ -119,7 +75,7 @@ const PagoMovilProcessor = ({
 
     const phone = buildPhoneForApi();
 
-    const userId = getUserIdFromToken() || localStorage.getItem("userId");
+    const userId = getUserIdFromToken();
     if (!userId) {
       setError(
         "No se encontro el usuario en la sesion. Inicia sesion de nuevo.",
@@ -192,6 +148,7 @@ const PagoMovilProcessor = ({
       </div>
 
       <form id={formId} onSubmit={handleSubmit} className="space-y-4">
+        <fieldset disabled={loading} className="space-y-4 border-0 p-0 m-0">
         <label className="block text-sm font-bold text-gray-700">
           Reportar Pago
         </label>
@@ -273,6 +230,7 @@ const PagoMovilProcessor = ({
           value={date}
           onChange={(event) => setDate(event.target.value)}
         />
+        </fieldset>
 
         {selectedPlan && (
           <p className="text-xs text-gray-500">

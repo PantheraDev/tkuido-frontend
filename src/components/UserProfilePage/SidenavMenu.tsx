@@ -1,4 +1,5 @@
-import { BookHeart, LogOut, User, Users } from "lucide-react";
+import { BookHeart, LogOut, User, Users, type LucideIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 import Logo from "../commons/Logo";
 import { useAuth } from "../../hook/useAuthActions";
 
@@ -15,22 +16,30 @@ const SidenavMenu = () => {
       {/* Navegación */}
       <nav className="my-auto text-sm font-medium text-gray-700 resp-p ">
         <div className="flex gap-15">
-          {sections.map((section) => (
-            <a
-              key={section}
-              href={`/${section.toLowerCase().replace(" ", "-")}`}
-              className="flex flex-col w-24 items-center gap-1 p-2 rounded hover:bg-[#2B7A57] hover:text-[#FFFFFF] transition"
-            >
-              {section === "Perfil" ? (
-                <User />
-              ) : section === "Familia" ? (
-                <Users />
-              ) : (
-                <BookHeart />
-              )}
-              {section}
-            </a>
-          ))}
+          {sections.map((section) =>
+            section.to ? (
+              <Link
+                key={section.label}
+                to={section.to}
+                className="flex flex-col w-24 items-center gap-1 p-2 rounded hover:bg-[#2B7A57] hover:text-[#FFFFFF] transition"
+              >
+                <section.icon />
+                {section.label}
+              </Link>
+            ) : (
+              // Sección aún sin página propia: se muestra deshabilitada en
+              // vez de enlazar a una ruta que no existe.
+              <span
+                key={section.label}
+                aria-disabled="true"
+                title="Próximamente"
+                className="flex flex-col w-24 items-center gap-1 p-2 rounded text-gray-400 cursor-not-allowed"
+              >
+                <section.icon />
+                {section.label}
+              </span>
+            ),
+          )}
         </div>
       </nav>
 
@@ -38,14 +47,14 @@ const SidenavMenu = () => {
       <div className="flex">
         <div className="h-[85%] w-[1.5px] my-auto rounded bg-gray-200"></div>
         <div className="px-4 pb-6 mt-auto resp-p">
-          <a
-            href="/tkuido-frontend/"
+          <button
+            type="button"
             className="flex items-center gap-3 p-2 text-red-600 hover:bg-red-50 rounded transition"
             onClick={logout}
           >
             <LogOut />
             Cerrar sesión
-          </a>
+          </button>
         </div>
       </div>
     </aside>
@@ -54,4 +63,10 @@ const SidenavMenu = () => {
 
 export default SidenavMenu;
 
-const sections = ["Perfil", "Familia", "Plan"];
+type NavSection = { label: string; to: string | null; icon: LucideIcon };
+
+const sections: NavSection[] = [
+  { label: "Perfil", to: "/perfil", icon: User },
+  { label: "Familia", to: null, icon: Users },
+  { label: "Plan", to: null, icon: BookHeart },
+];

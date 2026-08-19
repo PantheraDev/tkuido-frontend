@@ -46,6 +46,9 @@ export type TdcInternacionalPayload = {
   Dni: string;
   Name: string;
   token: string;
+  // Opcionales (Fase 6.3): expiración de la orden e idempotencia desde el front.
+  expireMinute?: number;
+  externalId?: string;
 };
 
 export type TdcInternacionalResponse = {

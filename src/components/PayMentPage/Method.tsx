@@ -13,6 +13,9 @@ type MethodProps = {
   onPagoMovilValidityChange: (isValid: boolean) => void;
   onNacionalValidityChange: (isValid: boolean) => void;
   onInternacionalValidityChange: (isValid: boolean) => void;
+  onPagoMovilSubmittingChange: (isSubmitting: boolean) => void;
+  onNacionalSubmittingChange: (isSubmitting: boolean) => void;
+  onInternacionalSubmittingChange: (isSubmitting: boolean) => void;
 };
 
 const Method = ({
@@ -24,6 +27,9 @@ const Method = ({
   onPagoMovilValidityChange,
   onNacionalValidityChange,
   onInternacionalValidityChange,
+  onPagoMovilSubmittingChange,
+  onNacionalSubmittingChange,
+  onInternacionalSubmittingChange,
 }: MethodProps) => {
   return (
     <>
@@ -54,6 +60,7 @@ const Method = ({
           <TarjetaNacionalProcessor
             formId={nacionalFormId}
             onFormValidityChange={onNacionalValidityChange}
+            onSubmittingChange={onNacionalSubmittingChange}
           />
         )}
 
@@ -61,6 +68,7 @@ const Method = ({
           <TarjetaInternacionalProcessor
             formId={internacionalFormId}
             onFormValidityChange={onInternacionalValidityChange}
+            onSubmittingChange={onInternacionalSubmittingChange}
           />
         )}
 
@@ -68,6 +76,7 @@ const Method = ({
           <PagoMovilProcessor
             formId={pagoMovilFormId}
             onFormValidityChange={onPagoMovilValidityChange}
+            onSubmittingChange={onPagoMovilSubmittingChange}
           />
         )}
       </div>

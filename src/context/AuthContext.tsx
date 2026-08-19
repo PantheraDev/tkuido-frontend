@@ -8,9 +8,12 @@ import {
 } from "react";
 import { jwtDecode } from "jwt-decode";
 
-// 1. Define qué forma tiene tu usuario (lo que viene en el payload del JWT)
+// 1. Define qué forma tiene tu usuario (lo que viene en el payload del JWT).
+// El claim de id real es `sub`; `id`/`idUser` se aceptan como alternativas
+// por si el backend cambia de nombre, igual que en el resto de la app.
 interface UserPayload {
-  id: string;
+  sub?: string;
+  id?: string;
   email: string;
   role: string;
   exp: number;
@@ -34,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   //const navigate = useNavigate();
   const logout = useCallback(() => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userId");
     setUser(null);
 
     window.location.href = appBase;
@@ -59,9 +63,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = (token: string) => {
     localStorage.setItem("token", token);
-    const userId = jwtDecode(token).sub?.toString() || "unknown";
-    console.log("ID del usuario logueado:", userId);
-    localStorage.setItem("userId", userId);
     const decoded = jwtDecode<UserPayload>(token);
     setUser(decoded);
   };

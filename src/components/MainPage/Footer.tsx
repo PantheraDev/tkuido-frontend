@@ -1,5 +1,6 @@
 import ContactLinks from "../commons/ContactLinks";
 import logo from "../../assets/Logo.png";
+import { sections as menu, getSectionHref } from "../../config/navigation";
 
 const font = "Avenir Black";
 
@@ -22,10 +23,10 @@ const Footer = () => {
         <div>
           <h4 className="resp-h4 mb-5 text-center">Navegación</h4>
           <ul className="space-y-2 text-sm">
-            {menu.map((item, index) => (
-              <li key={index}>
-                <a href="#" className="hover:underline">
-                  {item}
+            {menu.map((item) => (
+              <li key={item.id}>
+                <a href={getSectionHref(item.id)} className="hover:underline">
+                  {item.label}
                 </a>
               </li>
             ))}
@@ -44,11 +45,3 @@ const Footer = () => {
 };
 
 export default Footer;
-
-const menu = [
-  "Servicios",
-  "Planes",
-  "Sobre Nosotros",
-  "Preguntas Frecuentes",
-  "Contacto",
-];

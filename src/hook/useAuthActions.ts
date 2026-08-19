@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import api from '../api/axios'; // Tu instancia de Axios
+import api from '../api/axiosClient'; // Tu instancia de Axios
+import { normalizeApiError } from '../api/errors';
 import { useAuth } from '../context/AuthContext';
 
 export const useAuthActions = () => {
@@ -31,12 +32,7 @@ export const useAuthActions = () => {
       saveAuth(token);
       return true;
     } catch (err: unknown) {
-      // Manejo de errores igual que antes...
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Error al iniciar sesión');
-      }
+      setError(normalizeApiError(err, 'Usuario o contraseña incorrectos'));
       return false;
     } finally {
       setLoading(false);

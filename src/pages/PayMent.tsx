@@ -12,6 +12,10 @@ const PayMent = () => {
   const [isNacionalFormValid, setIsNacionalFormValid] = useState(false);
   const [isInternacionalFormValid, setIsInternacionalFormValid] =
     useState(false);
+  const [isPagoMovilSubmitting, setIsPagoMovilSubmitting] = useState(false);
+  const [isNacionalSubmitting, setIsNacionalSubmitting] = useState(false);
+  const [isInternacionalSubmitting, setIsInternacionalSubmitting] =
+    useState(false);
 
   const pagoMovilFormId = "pagomovil-payment-form";
   const nacionalFormId = "nacional-payment-form";
@@ -31,6 +35,15 @@ const PayMent = () => {
         ? isNacionalFormValid
         : isInternacionalFormValid;
 
+  // Evita doble envío/doble cobro: se deshabilita el botón mientras el
+  // procesador activo está esperando respuesta del backend.
+  const isSubmitting =
+    paymentMethod === "pagomovil"
+      ? isPagoMovilSubmitting
+      : paymentMethod === "nacional"
+        ? isNacionalSubmitting
+        : isInternacionalSubmitting;
+
   return (
     <>
       <Header />
@@ -47,6 +60,9 @@ const PayMent = () => {
               onPagoMovilValidityChange={setIsPagoMovilFormValid}
               onNacionalValidityChange={setIsNacionalFormValid}
               onInternacionalValidityChange={setIsInternacionalFormValid}
+              onPagoMovilSubmittingChange={setIsPagoMovilSubmitting}
+              onNacionalSubmittingChange={setIsNacionalSubmitting}
+              onInternacionalSubmittingChange={setIsInternacionalSubmitting}
             />
           </div>
           {/* Columna Derecha: Resumen */}
@@ -56,12 +72,12 @@ const PayMent = () => {
               <button
                 type="submit"
                 form={activeFormId}
-                disabled={!activeFormId || !isActiveFormValid}
+                disabled={!activeFormId || !isActiveFormValid || isSubmitting}
                 className="w-full h-12 rounded-xl bg-[#2B7A57] text-white font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Proceder al Pago
+                {isSubmitting ? "Procesando..." : "Proceder al Pago"}
               </button>
-              {!isActiveFormValid && (
+              {!isActiveFormValid && !isSubmitting && (
                 <p className="text-xs text-gray-500 mt-2">
                   Completa los campos requeridos para habilitar el pago.
                 </p>

@@ -1,5 +1,5 @@
 // src/hooks/useAxios.ts
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { AxiosError, type AxiosRequestConfig, type AxiosResponse } from "axios";
 import axiosClient from "../api/axiosClient"; // Asegúrate de que la ruta sea correcta
 
@@ -24,6 +24,14 @@ export const useAxios = <T = unknown>(
   const [loading, setLoading] = useState<boolean>(!options.manual);
   const [error, setError] = useState<AxiosError | null>(null);
 
+  // `options` suele pasarse como objeto literal inline en cada render, así
+  // que su identidad cambia constantemente. Lo guardamos en un ref para que
+  // `execute` lea siempre el valor más reciente sin que su propia identidad
+  // dependa de `options` (evita el `eslint-disable-next-line` que antes era
+  // necesario en cada consumidor de este hook).
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
   const execute = useCallback(
     async (configOverride?: AxiosRequestConfig): Promise<T> => {
       setLoading(true);
@@ -33,7 +41,7 @@ export const useAxios = <T = unknown>(
         // Combinamos la URL del hook con las opciones iniciales y los overrides del momento
         const response: AxiosResponse<T> = await axiosClient({
           url,
-          ...options,
+          ...optionsRef.current,
           ...configOverride,
         });
 
@@ -47,7 +55,7 @@ export const useAxios = <T = unknown>(
         setLoading(false);
       }
     },
-    [url, options],
+    [url],
   );
 
   // Efecto para ejecución automática (GET al cargar página)

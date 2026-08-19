@@ -2,11 +2,11 @@ import { useState } from "react";
 import Button from "../commons/Button";
 import Logo from "./Logo";
 import { useAuth } from "../../hook/useAuthActions";
+import { sections as menu, getSectionHref } from "../../config/navigation";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
-  const getSectionHref = (id: string) => `${import.meta.env.BASE_URL}#${id}`;
 
   const toggleMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -104,11 +104,3 @@ const Header = () => {
 };
 
 export default Header;
-
-const menu = [
-  { label: "Servicios", id: "services" },
-  { label: "Planes", id: "planes" },
-  { label: "Sobre Nosotros", id: "sobre-nosotros" },
-  { label: "Preguntas Frecuentes", id: "preguntas-frecuentes" },
-  { label: "Contacto", id: "contacto" },
-];

@@ -1,15 +1,14 @@
 // src/api/axiosClient.ts
 import axios from "axios";
 
+// Cliente Axios único de la app. Nunca degrada a HTTP: usa la URL de entorno
+// (útil para desarrollo local, ej. http://localhost:8080) o el dominio de
+// producción en HTTPS por defecto.
 const axiosClient = axios.create({
-  // Ajusta esto a la URL de tu backend (ej. http://localhost:8080)
   baseURL:
     import.meta.env.VITE_BACKEND_URL ||
     import.meta.env.VITE_API_BASE_URL ||
-    // Evita mixed-content: si la página está en HTTPS, forzamos https en el host.
-    (typeof window !== "undefined" && (window.location.protocol === "https:" || window.location.protocol === "http:")
-      ? `${window.location.protocol}//tkuido.exatronclouds.com`
-      : "https://tkuido.exatronclouds.com"),
+    "https://tkuido.exatronclouds.com",
   headers: {
     "Content-Type": "application/json",
   },
@@ -26,6 +25,27 @@ axiosClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  },
+);
+
+// Interceptor: si la API dice que el token no sirve (401), limpiamos la
+// sesión y redirigimos al root del app. Se excluye la propia request de
+// login para no interferir con el manejo de credenciales inválidas.
+axiosClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const requestUrl = String(error.config?.url ?? "");
+    const isLoginRequest = /(^|\/)login(\?|$)/.test(requestUrl);
+
+    if (status === 401 && !isLoginRequest) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      const base = import.meta.env.BASE_URL || "/";
+      const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+      window.location.href = normalizedBase;
+    }
     return Promise.reject(error);
   },
 );

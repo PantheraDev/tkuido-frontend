@@ -4,19 +4,28 @@ import lock from "../../assets/lock_icon.png";
 /*import Button from "../commons/Button";*/
 import { useState } from "react";
 import { useAuthActions } from "../../hook/useAuthActions";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const FormLogin = () => {
   const { login, loading, error } = useAuthActions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as
+    | { notice?: string; from?: { pathname: string } }
+    | null;
+  const notice = state?.notice;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await login(email, password);
     if (success) {
-      navigate("/perfil");
+      // Si venías de una ruta protegida (ej. "Contratar" un plan sin sesión),
+      // ProtectedRoute guarda esa ruta en location.state.from; volvemos ahí
+      // en vez de mandar siempre a /perfil.
+      const from = state?.from?.pathname ?? "/perfil";
+      navigate(from, { replace: true });
     }
   };
 
@@ -33,18 +42,29 @@ const FormLogin = () => {
           </div>
           <h2 className="resp-h2 mb-6">Iniciar Sesión</h2>
 
+          {notice && (
+            <p className="mb-4 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+              {notice}
+            </p>
+          )}
+
           <form className="space-y-5" onSubmit={handleLogin}>
             <div>
-              <label className="block mb-1 text-sm font-medium text-gray-700">
+              <label
+                htmlFor="login-email"
+                className="block mb-1 text-sm font-medium text-gray-700"
+              >
                 Email
               </label>
               <div className="relative">
                 <img
                   src={mail}
-                  alt="Email icono"
+                  alt=""
+                  aria-hidden="true"
                   className="absolute top-1/2 left-3 transform -translate-y-1/2 w-5 h-5"
                 />
                 <input
+                  id="login-email"
                   type="email"
                   className="resp-p pl-10 pr-4 py-2 w-full bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
                   placeholder="ejemplo@gmail.com"
@@ -55,14 +75,18 @@ const FormLogin = () => {
               </div>
             </div>
             <div>
-              <label className="block text-sm mb-1">Password</label>
+              <label htmlFor="login-password" className="block text-sm mb-1">
+                Password
+              </label>
               <div className="relative">
                 <img
                   src={lock}
-                  alt="Password icono"
+                  alt=""
+                  aria-hidden="true"
                   className="absolute top-1/2 left-3 transform -translate-y-1/2 w-5 h-5"
                 />
                 <input
+                  id="login-password"
                   type="password"
                   placeholder="••••••••"
                   className="resp-p pl-10 pr-4 py-2 w-full bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
@@ -77,9 +101,12 @@ const FormLogin = () => {
                 <input type="checkbox" />
                 <span className="text-sm">Recuerdame</span>
               </label>
-              <a href="#" className="text-sm text-[#35AE74] hover:underline">
+              <Link
+                to="/recuperar"
+                className="text-sm text-[#35AE74] hover:underline"
+              >
                 Olvidaste tu contraseña?
-              </a>
+              </Link>
             </div>
             <div className="flex flex-col">
               {/*<Button link="/perfil" text="Iniciar Sesión" color="#2B7A57" /> */}
@@ -90,11 +117,7 @@ const FormLogin = () => {
               >
                 {loading ? "Cargando..." : "Iniciar Sesión"}
               </button>
-              {error && (
-                <p className="text-red-500 mt-2">
-                  Usuario o contraseña incorrectos
-                </p>
-              )}
+              {error && <p className="text-red-500 mt-2">{error}</p>}
             </div>
           </form>
 
