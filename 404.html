@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tkuido</title>
+    <script>
+      // GitHub Pages no conoce las rutas del SPA: cualquier enlace profundo
+      // (/tkuido-frontend/checkout/success, al que redirige el callback de
+      // Bancamiga tras el pago) devuelve este 404. Se reescribe la URL a la
+      // raíz del app conservando la ruta en la query para que el router de
+      // React la resuelva al cargar.
+      (function () {
+        var base = "/tkuido-frontend/";
+        var l = window.location;
+        var path = l.pathname.indexOf(base) === 0
+          ? l.pathname.slice(base.length)
+          : l.pathname.replace(/^\//, "");
+
+        l.replace(
+          l.origin +
+            base +
+            "?redirect=" +
+            encodeURIComponent(path + l.search + l.hash)
+        );
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>
