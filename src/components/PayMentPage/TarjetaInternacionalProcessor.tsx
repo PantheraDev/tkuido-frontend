@@ -158,7 +158,14 @@ const TarjetaInternacionalProcessor = ({
 
       // Guarda el ordenID para reconciliar al volver de la página alojada.
       // Nunca confíes solo en el redirect: /checkout/* reconfirma con GET /:orderId.
-      sessionStorage.setItem("intl_ordenID", String(ordenID ?? ""));
+      // Si la pasarela no devuelve ordenID no se guarda nada: escribir "" dejaba
+      // una referencia vacía y /checkout/* se saltaba la verificación. El
+      // externalId siempre queda como respaldo, y el backend resuelve por ambos.
+      if (ordenID) {
+        sessionStorage.setItem("intl_ordenID", String(ordenID));
+      } else {
+        sessionStorage.removeItem("intl_ordenID");
+      }
       sessionStorage.setItem("intl_externalId", externalId);
 
       // El intento queda cerrado: al volver de la pasarela, comprar otra vez

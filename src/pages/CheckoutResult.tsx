@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   getInternacionalPaymentStatus,
@@ -15,10 +15,18 @@ type OrderStatus =
   | "expired"
   | "cancelled";
 
+// `unverified` no es un estado de la orden: es "no pudimos preguntarle al
+// backend". Antes se caía silenciosamente al outcome optimista de la ruta, así
+// que un backend caído mostraba "Pago confirmado" sin haber confirmado nada.
+type ViewState = OrderStatus | "unverified";
+
 type CheckoutResultProps = {
   // Estado "optimista" según la ruta a la que el callback redirigió.
   outcome: OrderStatus;
 };
+
+const MAX_TRIES = 5;
+const RETRY_INTERVAL_MS = 4000;
 
 const normalizeStatus = (
   res: InternacionalPaymentStatusResponse,
@@ -34,29 +42,18 @@ const normalizeStatus = (
   return null;
 };
 
-// Polling opcional para `pending` (Fase 6.2): el cliente pudo volver antes de
-// que Bancamiga confirmara. El backend además reconcilia por cron de respaldo.
-const pollStatus = async (
-  orderId: string,
-  current: OrderStatus,
-  { tries = 5, intervalMs = 4000 } = {},
-): Promise<OrderStatus> => {
-  let status = current;
-  for (let i = 0; i < tries; i++) {
-    if (status !== "pending") return status;
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
-    try {
-      const res = await getInternacionalPaymentStatus(orderId);
-      status = normalizeStatus(res) ?? status;
-    } catch {
-      return status;
-    }
-  }
-  return status;
+const readStored = (key: string): string | null => {
+  // `TarjetaInternacionalProcessor` llegó a guardar "" cuando la pasarela no
+  // devolvía ordenID; sin este trim quedaba una referencia vacía que saltaba
+  // la verificación entera.
+  const value = sessionStorage.getItem(key)?.trim();
+  return value ? value : null;
 };
 
+const isFinal = (status: OrderStatus): boolean => status !== "pending";
+
 const VIEW: Record<
-  OrderStatus,
+  ViewState,
   { icon: string; title: string; message: string; tone: string }
 > = {
   approved: {
@@ -88,55 +85,101 @@ const VIEW: Record<
     icon: "⏳",
     title: "Pago en verificación",
     message:
-      "Estamos confirmando tu pago. Te avisaremos en cuanto se resuelva; puedes volver a consultar en unos minutos.",
+      "Estamos confirmando tu pago con el banco. Te avisaremos por correo en cuanto se resuelva; también puedes volver a consultar en unos minutos.",
     tone: "text-gray-600",
+  },
+  unverified: {
+    icon: "⚠️",
+    title: "No pudimos confirmar tu pago",
+    message:
+      "El pago pudo haberse procesado, pero no logramos verificarlo con el servidor. No vuelvas a pagar todavía: revisa tu perfil en unos minutos o contacta a soporte con la referencia.",
+    tone: "text-amber-600",
   },
 };
 
 const CheckoutResult = ({ outcome }: CheckoutResultProps) => {
   const [params] = useSearchParams();
-  const reference =
+  const paramRef =
     params.get("ref") ?? params.get("externalId") ?? params.get("orderId");
 
-  const [status, setStatus] = useState<OrderStatus>(outcome);
+  const [status, setStatus] = useState<ViewState>(outcome);
   const [verifying, setVerifying] = useState(true);
+  const [attempt, setAttempt] = useState(1);
+  // Cuántas veces se consultó de verdad: distingue "confirmado por el backend"
+  // de "es lo que decía la URL del callback".
+  const [confirmed, setConfirmed] = useState(false);
+  const activeRef = useRef(true);
 
-  useEffect(() => {
-    let active = true;
+  const verify = useCallback(async () => {
+    const reference =
+      readStored("intl_ordenID") ?? readStored("intl_externalId") ?? paramRef;
 
-    // Reconfirmación recomendada: no confíes solo en la ruta del callback.
-    const ordenID = sessionStorage.getItem("intl_ordenID");
-
-    const finish = (final: OrderStatus) => {
-      if (!active) return;
-      setStatus(final);
+    // El backend resuelve la orden tanto por ordenID de Bancamiga como por
+    // nuestro externalId, así que cualquiera de las dos referencias sirve.
+    if (!reference) {
+      if (!activeRef.current) return;
+      setStatus("unverified");
       setVerifying(false);
-      sessionStorage.removeItem("intl_ordenID");
-    };
-
-    if (!ordenID) {
-      finish(outcome);
       return;
     }
 
-    getInternacionalPaymentStatus(ordenID)
-      .then(async (res) => {
-        const resolved = normalizeStatus(res) ?? outcome;
-        const final =
-          resolved === "pending"
-            ? await pollStatus(ordenID, resolved)
-            : resolved;
-        finish(final);
-      })
-      .catch(() => finish(outcome));
+    setVerifying(true);
+    setStatus(outcome);
+    setConfirmed(false);
 
+    let lastError = true;
+
+    for (let i = 0; i < MAX_TRIES; i++) {
+      if (!activeRef.current) return;
+      setAttempt(i + 1);
+
+      try {
+        const res = await getInternacionalPaymentStatus(reference);
+        if (!activeRef.current) return;
+
+        lastError = false;
+        const resolved = normalizeStatus(res);
+
+        if (resolved && isFinal(resolved)) {
+          setStatus(resolved);
+          setConfirmed(true);
+          setVerifying(false);
+          sessionStorage.removeItem("intl_ordenID");
+          sessionStorage.removeItem("intl_externalId");
+          return;
+        }
+      } catch {
+        lastError = true;
+      }
+
+      // Sigue pendiente (o falló la consulta): reintenta, salvo en la última
+      // vuelta, donde esperar otro intervalo no aporta nada.
+      if (i < MAX_TRIES - 1) {
+        await new Promise((resolve) => setTimeout(resolve, RETRY_INTERVAL_MS));
+      }
+    }
+
+    if (!activeRef.current) return;
+    // Agotados los intentos: si nunca respondió, no afirmamos ningún estado.
+    setStatus(lastError ? "unverified" : "pending");
+    setConfirmed(!lastError);
+    setVerifying(false);
+  }, [outcome, paramRef]);
+
+  useEffect(() => {
+    activeRef.current = true;
+    void verify();
     return () => {
-      active = false;
+      activeRef.current = false;
     };
-  }, [outcome]);
+  }, [verify]);
 
   const view = VIEW[status];
-  const canRetry = status === "rejected" || status === "expired" || status === "cancelled";
+  const canRetry =
+    status === "rejected" || status === "expired" || status === "cancelled";
+  const canRecheck = status === "pending" || status === "unverified";
+  const reference =
+    paramRef ?? readStored("intl_ordenID") ?? readStored("intl_externalId");
 
   return (
     <>
@@ -145,10 +188,23 @@ const CheckoutResult = ({ outcome }: CheckoutResultProps) => {
         <div className="bg-white border rounded-2xl shadow-sm p-8 text-center">
           {verifying ? (
             <>
-              <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-gray-100 border-t-[#2B7A57]" />
+              <div
+                role="status"
+                aria-live="polite"
+                className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-gray-100 border-t-[#2B7A57]"
+              />
               <p className="mt-4 text-sm font-medium text-gray-700">
                 Verificando el estado de tu pago...
               </p>
+              <p className="mt-1 text-xs text-gray-400">
+                Consultando al banco (intento {attempt} de {MAX_TRIES}). No
+                cierres esta ventana.
+              </p>
+              {reference && (
+                <p className="mt-3 text-xs text-gray-400">
+                  Referencia: {reference}
+                </p>
+              )}
             </>
           ) : (
             <>
@@ -162,6 +218,11 @@ const CheckoutResult = ({ outcome }: CheckoutResultProps) => {
                   Referencia: {reference}
                 </p>
               )}
+              {!confirmed && status !== "unverified" && (
+                <p className="mt-2 text-xs text-amber-600">
+                  Estado sin confirmar con el servidor.
+                </p>
+              )}
 
               <div className="mt-8 flex flex-col gap-3">
                 {status === "approved" && (
@@ -171,6 +232,15 @@ const CheckoutResult = ({ outcome }: CheckoutResultProps) => {
                   >
                     Ver mi póliza
                   </Link>
+                )}
+                {canRecheck && (
+                  <button
+                    type="button"
+                    onClick={() => void verify()}
+                    className="w-full h-11 rounded-xl bg-[#2B7A57] text-white font-semibold flex items-center justify-center hover:bg-[#245f44] transition"
+                  >
+                    Volver a verificar
+                  </button>
                 )}
                 {canRetry && (
                   <Link
