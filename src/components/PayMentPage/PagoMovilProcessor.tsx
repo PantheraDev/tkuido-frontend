@@ -4,9 +4,17 @@ import {
   processPagoMovilAndCreatePoliza,
   resolveClienteDataFromPerfil,
 } from "../../api/payment";
+import { formatBs } from "../../api/exchangeRate";
+import {
+  fechaNoFutura,
+  pagoMovilRules,
+  validate,
+} from "../../validation/payments";
 import { getUserIdFromToken } from "../../utils/auth";
-import { formatDate, getOneYearAfter } from "../../utils/date";
+import { getApiErrorMessage } from "../../utils/apiError";
+import { formatDate, getOneYearAfter, todayLocal } from "../../utils/date";
 import { useSelectedPlan } from "../../hook/useSelectedPlan";
+import { useTasaBcv } from "../../hook/useTasaBcv";
 
 type PagoMovilProcessorProps = {
   formId: string;
@@ -20,7 +28,9 @@ const PagoMovilProcessor = ({
   onSubmittingChange,
 }: PagoMovilProcessorProps) => {
   const [bank, setBank] = useState("0105");
-  const [phonePrefix, setPhonePrefix] = useState("0414");
+  // El valor debe coincidir con los `value` del select (prefijo internacional
+  // sin el 0 inicial), no con la etiqueta que ve el usuario.
+  const [phonePrefix, setPhonePrefix] = useState("58414");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [reference, setReference] = useState("");
   const [date, setDate] = useState(formatDate(new Date()));
@@ -30,24 +40,39 @@ const PagoMovilProcessor = ({
   const [successMessage, setSuccessMessage] = useState("");
 
   const selectedPlan = useSelectedPlan();
+  const { tasa, loading: tasaLoading, error: tasaError, aBolivares } = useTasaBcv();
 
-  const buildPhoneForApi = (): string => {
-    const prefix = phonePrefix.replace(/^0/, "");
-    const number = phoneNumber.replace(/\D/g, "");
-    return `${prefix}${number}`;
-  };
+  const montoUsd = useMemo(
+    () => (selectedPlan ? Number((selectedPlan.price * 1.16).toFixed(2)) : 0),
+    [selectedPlan],
+  );
+  const montoBs = useMemo(
+    () => (montoUsd > 0 ? aBolivares(montoUsd) : null),
+    [montoUsd, aBolivares],
+  );
 
-  const isFormValid = useMemo(() => {
-    const cleanPhoneNumber = phoneNumber.replace(/\D/g, "");
+  const hoy = todayLocal();
 
-    return (
-      bank.trim() !== "" &&
-      phonePrefix.trim() !== "" &&
-      reference.trim() !== "" &&
-      date.trim() !== "" &&
-      cleanPhoneNumber.length >= 7
-    );
-  }, [bank, phonePrefix, reference, date, phoneNumber]);
+  // El DTO espera 58 + operadora + número (584241234567). Antes se hacía
+  // `phonePrefix.replace(/^0/, "")`, que con el valor por defecto producía
+  // "414..." en vez de "58414...".
+  const buildPhoneForApi = (): string =>
+    `${phonePrefix}${phoneNumber.replace(/\D/g, "")}`;
+
+  const values = useMemo(
+    () => ({
+      bank,
+      phonePrefix,
+      phoneNumber: phoneNumber.replace(/\D/g, ""),
+      reference: reference.replace(/\D/g, ""),
+      date,
+    }),
+    [bank, phonePrefix, phoneNumber, reference, date],
+  );
+
+  const errors = useMemo(() => validate(pagoMovilRules, values), [values]);
+  const isFormValid =
+    Object.keys(errors).length === 0 && fechaNoFutura(date, hoy) === true;
 
   useEffect(() => {
     onFormValidityChange(isFormValid);
@@ -62,14 +87,12 @@ const PagoMovilProcessor = ({
     setError("");
     setSuccessMessage("");
 
-    if (!phoneNumber || !reference || !date || !bank || !phonePrefix) {
-      setError("Completa todos los campos para reportar el pago.");
-      return;
-    }
+    const primerError =
+      Object.values(errors)[0] ??
+      (fechaNoFutura(date, hoy) === true ? null : fechaNoFutura(date, hoy));
 
-    const cleanPhoneNumber = phoneNumber.replace(/\D/g, "");
-    if (cleanPhoneNumber.length < 7) {
-      setError("Ingresa un numero telefonico valido (al menos 7 digitos).");
+    if (typeof primerError === "string") {
+      setError(primerError);
       return;
     }
 
@@ -105,7 +128,10 @@ const PagoMovilProcessor = ({
           phone,
           bank,
           date,
-          reference,
+          reference: values.reference,
+          // El backend contrasta el monto transferido con este precio a la
+          // tasa BCV: sin esto bastaba reportar 1 Bs para emitir la poliza.
+          ...(montoUsd > 0 ? { montoUsd: montoUsd.toFixed(2) } : {}),
         },
         polizaBase: {
           fechaInicio,
@@ -127,9 +153,15 @@ const PagoMovilProcessor = ({
       }
 
       setSuccessMessage(`Pago registrado y poliza creada correctamente.`);
-    } catch {
+    } catch (err) {
+      // getApiErrorMessage devuelve el mensaje del backend (monto que no
+      // cuadra, referencia inexistente...) y, para PagoCobradoSinPolizaError,
+      // el aviso de que el pago SÍ se registró.
       setError(
-        "No se pudo procesar el pago o crear la poliza. Verifica los datos e intenta de nuevo.",
+        getApiErrorMessage(
+          err,
+          "No se pudo verificar el pago. Revisa la referencia, el banco y la fecha.",
+        ),
       );
     } finally {
       setLoading(false);
@@ -145,7 +177,32 @@ const PagoMovilProcessor = ({
         <p className="font-bold text-lg text-gray-800 mt-2">0172 - Bancamiga</p>
         <p className="text-gray-800">0412-6086009</p>
         <p className="text-gray-800">J-314689088</p>
+
+        <div className="mt-3 pt-3 border-t border-gray-200">
+          {tasaLoading && (
+            <p className="text-sm text-gray-500">
+              Calculando el monto en bolivares...
+            </p>
+          )}
+          {!tasaLoading && montoBs !== null && (
+            <>
+              <p className="text-sm text-gray-500">Monto exacto a transferir</p>
+              <p className="font-bold text-xl text-emerald-700">
+                Bs {formatBs(montoBs)}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                ${montoUsd.toFixed(2)} a la tasa BCV de {tasa?.tasa}
+              </p>
+            </>
+          )}
+        </div>
       </div>
+
+      {tasaError && (
+        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+          {tasaError}
+        </p>
+      )}
 
       <form id={formId} onSubmit={handleSubmit} className="space-y-4">
         <fieldset disabled={loading} className="space-y-4 border-0 p-0 m-0">
@@ -193,8 +250,9 @@ const PagoMovilProcessor = ({
           </select>
 
           <input
-            type="number"
-            placeholder="Numero de Referencia (Ultimos 4 o 6 digitos)"
+            type="text"
+            inputMode="numeric"
+            placeholder="Numero de Referencia"
             className="w-full border p-3 rounded-lg"
             value={reference}
             onChange={(event) => setReference(event.target.value)}
@@ -216,16 +274,21 @@ const PagoMovilProcessor = ({
           </select>
 
           <input
-            type="number"
-            placeholder="Número de Teléfono (sin el prefijo)"
+            type="text"
+            inputMode="numeric"
+            maxLength={7}
+            placeholder="Número de Teléfono (7 dígitos)"
             className="w-full border p-3 rounded-lg"
             value={phoneNumber}
-            onChange={(event) => setPhoneNumber(event.target.value)}
+            onChange={(event) =>
+              setPhoneNumber(event.target.value.replace(/\D/g, "").slice(0, 7))
+            }
           />
         </div>
 
         <input
           type="date"
+          max={hoy}
           className="w-full border p-3 rounded-lg"
           value={date}
           onChange={(event) => setDate(event.target.value)}

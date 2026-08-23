@@ -1,4 +1,6 @@
 import { useLocation } from "react-router-dom";
+import { formatBs } from "../../api/exchangeRate";
+import { useTasaBcv } from "../../hook/useTasaBcv";
 
 type SelectedPlan = {
   id?: number;
@@ -32,6 +34,11 @@ const TotalPay = () => {
   const tax = subtotal * 0.16;
   const total = subtotal + tax;
 
+  // Los métodos en bolívares (pago móvil y tarjeta nacional) cobran este total
+  // convertido a la tasa oficial del BCV.
+  const { tasa, loading: tasaLoading, aBolivares } = useTasaBcv();
+  const totalBs = total > 0 ? aBolivares(Number(total.toFixed(2))) : null;
+
   return (
     <>
       <h4 className="font-bold text-lg mb-4 text-gray-800">
@@ -53,6 +60,22 @@ const TotalPay = () => {
           ${total.toFixed(2)}
         </span>
       </div>
+
+      <div className="mt-2 text-right text-sm">
+        {tasaLoading && (
+          <span className="text-gray-400">Consultando tasa BCV...</span>
+        )}
+        {!tasaLoading && totalBs !== null && (
+          <>
+            <span className="text-gray-600">Bs {formatBs(totalBs)}</span>
+            <p className="text-xs text-gray-400">
+              Tasa BCV {tasa?.tasa}
+              {tasa?.desactualizada && " (ultima disponible)"}
+            </p>
+          </>
+        )}
+      </div>
+
       <div className="mt-6 text-xs text-gray-400 text-center">
         Pago seguro encriptado SSL 256-bit
       </div>

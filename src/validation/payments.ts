@@ -20,6 +20,24 @@ export const nationalRules: ValidationRules = {
   reference: (v) => /^\d{1,10}$/.test(v) || "Referencia numérica (máx. 10 dígitos)",
 };
 
+// Pago móvil — espejo de `VerifyPagoDto`.
+// `phone` viaja como 58 + operadora + 7 dígitos (ej. 584241234567) y la fecha
+// debe cumplir el @Matches(/^\d{4}-\d{2}-\d{2}$/) del DTO.
+export const pagoMovilRules: ValidationRules = {
+  bank: (v) => /^\d{4}$/.test(v) || "Selecciona el banco emisor",
+  phonePrefix: (v) => /^58\d{3}$/.test(v) || "Selecciona la operadora",
+  phoneNumber: (v) =>
+    /^\d{7}$/.test(v) || "El teléfono son 7 dígitos (sin el prefijo)",
+  reference: (v) =>
+    /^\d{4,}$/.test(v) || "Referencia numérica (mínimo 4 dígitos)",
+  date: (v) =>
+    /^\d{4}-\d{2}-\d{2}$/.test(v) || "Fecha en formato YYYY-MM-DD",
+};
+
+/** La transferencia no puede ser futura. Se valida aparte por depender de hoy. */
+export const fechaNoFutura = (date: string, hoy: string): true | string =>
+  date <= hoy || "La fecha del pago no puede ser futura";
+
 // Internacional — espejo de `InternacionalPayDto` (orden + página alojada en dólares).
 export const intlRules: ValidationRules = {
   Monto: (v) =>

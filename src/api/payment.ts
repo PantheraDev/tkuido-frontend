@@ -6,14 +6,24 @@ export type PagoMovilPayload = {
   bank: string;
   date: string;
   reference: string;
+  /** Precio del plan en dólares: el backend contrasta la transferencia con la tasa BCV. */
+  montoUsd?: string;
 };
 
 export type PagoMovilResponse = {
-  idPago: number;
+  // idPago es el uuid de PaymentOrm, no un número.
+  idPago: string;
+  ID: string;
+  Amount: number;
+  BancoOrig: string;
+  NroReferencia: string;
+  FechaMovimiento: string;
+  Status: string;
 };
 
 export type TdcNacionalPayload = {
   idCliente: string;
+  /** Monto en bolívares, ya convertido con la tasa BCV. */
   amount: string;
   creditCardNumber: string;
   cvv: string;
@@ -21,6 +31,8 @@ export type TdcNacionalPayload = {
   expirationYear: string;
   ci: string;
   reference: string;
+  /** Precio del plan en dólares, para que el backend revalide `amount`. */
+  montoUsd?: string;
 };
 
 export type TdcNacionalResponse = {
@@ -51,17 +63,22 @@ export type TdcInternacionalPayload = {
   externalId?: string;
 };
 
+/**
+ * Respuesta real de POST /international-pay/tdc (TdcPayResponse del backend).
+ * OJO: `ordenID` y `url` viajan DENTRO de `data`, no en la raíz.
+ */
 export type TdcInternacionalResponse = {
   idPago: string;
-  Amount?: number | string;
-  CallbackUrl?: string;
-  CallbackUrlCancel?: string;
-  Dni?: string;
-  Name?: string;
-  Status?: string;
-  ordenID?: string;
-  url?: string;
-  [key: string]: unknown;
+  idPoliza: string | null;
+  idTdcInternacional: string;
+  success: boolean;
+  message: string;
+  data: {
+    ordenID: string | null;
+    url: string | null;
+    status?: string;
+    raw?: unknown;
+  } | null;
 };
 
 export type PolizaPayload = {
@@ -162,9 +179,38 @@ export const createTdcInternacional = async (
   return data;
 };
 
+/** Respuesta de GET /international-pay/:orderId (StatusResponse del backend). */
 export type InternacionalPaymentStatusResponse = {
+  orderId?: string;
+  status?: string;
+  exitoso?: boolean;
+  codigoTransaccion?: string | null;
+  mensaje?: string | null;
+  data?: unknown;
+  // La pasarela puede añadir campos; se conserva el índice para no romper.
   [key: string]: unknown;
 };
+
+/**
+ * El cobro se completó pero la póliza no se pudo crear. Es crítico
+ * distinguirlo de un pago fallido: al cliente YA se le cobró, así que
+ * decirle "reintenta" provocaría un doble cargo.
+ */
+export class PagoCobradoSinPolizaError extends Error {
+  readonly idPago: string;
+  readonly causa: unknown;
+
+  constructor(idPago: string, causa: unknown) {
+    super(
+      "El pago se procesó correctamente, pero no se pudo emitir la póliza. " +
+        "No vuelvas a pagar: nuestro equipo la emitirá con tu comprobante.",
+    );
+    this.name = "PagoCobradoSinPolizaError";
+    this.idPago = idPago;
+    this.causa = causa;
+    Object.setPrototypeOf(this, PagoCobradoSinPolizaError.prototype);
+  }
+}
 
 export const getInternacionalPaymentStatus = async (
   orderId: string,
@@ -193,12 +239,17 @@ export const processPagoMovilAndCreatePoliza = async ({
     throw new Error("La API no devolvio idPago en la respuesta de /PM");
   }
 
-  const poliza = await createPoliza({
-    ...polizaBase,
-    idPago: String(pago.idPago),
-  });
-
-  return { pago, poliza };
+  // A partir de aquí el pago ya está verificado y registrado: un fallo de la
+  // póliza no debe presentarse como "el pago no se pudo procesar".
+  try {
+    const poliza = await createPoliza({
+      ...polizaBase,
+      idPago: String(pago.idPago),
+    });
+    return { pago, poliza };
+  } catch (error) {
+    throw new PagoCobradoSinPolizaError(String(pago.idPago), error);
+  }
 };
 
 type ProcessTdcNacionalParams = {
@@ -223,10 +274,16 @@ export const processTdcNacionalAndCreatePoliza = async ({
     throw new Error("La API no devolvio idPago en la respuesta de /tdc-nacional");
   }
 
-  const poliza = await createPoliza({
-    ...polizaBase,
-    idPago: String(tdc.idPago),
-  });
-
-  return { tdc, poliza };
+  // La tarjeta ya fue cobrada: si falla la póliza hay que decirlo con claridad
+  // en vez de invitar a reintentar y provocar un segundo cargo.
+  try {
+    const poliza = await createPoliza({
+      ...polizaBase,
+      idPago: String(tdc.idPago),
+    });
+    return { tdc, poliza };
+  } catch (error) {
+    throw new PagoCobradoSinPolizaError(String(tdc.idPago), error);
+  }
 };
+

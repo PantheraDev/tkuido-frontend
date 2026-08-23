@@ -1,13 +1,20 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import {
   getPerfilByUserId,
+  PagoCobradoSinPolizaError,
   processTdcNacionalAndCreatePoliza,
   resolveClienteDataFromPerfil,
 } from "../../api/payment";
+import { formatBs } from "../../api/exchangeRate";
 import { nationalRules, validate } from "../../validation/payments";
 import { getUserIdFromToken } from "../../utils/auth";
+import {
+  esErrorDeCobroIncierto,
+  getApiErrorMessage,
+} from "../../utils/apiError";
 import { formatDate, getOneYearAfter } from "../../utils/date";
 import { useSelectedPlan } from "../../hook/useSelectedPlan";
+import { useTasaBcv } from "../../hook/useTasaBcv";
 
 type TarjetaNacionalProcessorProps = {
   formId: string;
@@ -33,16 +40,23 @@ const TarjetaNacionalProcessor = ({
   const [submitted, setSubmitted] = useState(false);
 
   const selectedPlan = useSelectedPlan();
-  const amount = useMemo(
+  const { tasa, loading: tasaLoading, error: tasaError, aBolivares } = useTasaBcv();
+
+  // El plan está en dólares; este gateway cobra en bolívares.
+  const montoUsd = useMemo(
     () =>
-      String(selectedPlan ? Number((selectedPlan.price * 1.16).toFixed(2)) : 0),
+      selectedPlan ? Number((selectedPlan.price * 1.16).toFixed(2)) : 0,
     [selectedPlan],
+  );
+  const montoBs = useMemo(
+    () => (montoUsd > 0 ? aBolivares(montoUsd) : null),
+    [montoUsd, aBolivares],
   );
 
   // Valores normalizados (solo dígitos) para validar contra el espejo del DTO.
   const values = useMemo(
     () => ({
-      amount,
+      amount: montoBs !== null ? String(montoBs) : "",
       creditCardNumber: creditCardNumber.replace(/\D/g, ""),
       cvv: cvv.replace(/\D/g, ""),
       expirationMonth: expirationMonth.replace(/\D/g, ""),
@@ -50,11 +64,12 @@ const TarjetaNacionalProcessor = ({
       ci: ci.replace(/\D/g, ""),
       reference: reference.replace(/\D/g, ""),
     }),
-    [amount, creditCardNumber, cvv, expirationMonth, expirationYear, ci, reference],
+    [montoBs, creditCardNumber, cvv, expirationMonth, expirationYear, ci, reference],
   );
 
   const errors = useMemo(() => validate(nationalRules, values), [values]);
-  const isFormValid = Object.keys(errors).length === 0;
+  // Sin tasa no se puede calcular el monto real, así que no se habilita el pago.
+  const isFormValid = Object.keys(errors).length === 0 && montoBs !== null;
 
   useEffect(() => {
     onFormValidityChange(isFormValid);
@@ -74,6 +89,13 @@ const TarjetaNacionalProcessor = ({
     setError("");
     setSuccessMessage("");
     setSubmitted(true);
+
+    if (montoBs === null) {
+      setError(
+        "No se pudo obtener la tasa de cambio para calcular el monto en bolívares.",
+      );
+      return;
+    }
 
     if (!isFormValid) {
       setError("Revisa los campos marcados antes de continuar.");
@@ -97,7 +119,7 @@ const TarjetaNacionalProcessor = ({
       setLoading(true);
 
       const perfil = await getPerfilByUserId(userId);
-      const { idCliente, clienteUuid } = resolveClienteDataFromPerfil(perfil);
+      const { idCliente } = resolveClienteDataFromPerfil(perfil);
 
       if (!idCliente) {
         setError("No se pudo obtener idCliente desde el perfil del usuario.");
@@ -108,6 +130,7 @@ const TarjetaNacionalProcessor = ({
         tdcNacional: {
           idCliente,
           amount: values.amount,
+          montoUsd: montoUsd.toFixed(2),
           creditCardNumber: values.creditCardNumber,
           cvv: values.cvv,
           expirationMonth: values.expirationMonth,
@@ -123,11 +146,14 @@ const TarjetaNacionalProcessor = ({
           deducible: "500",
           estado: "Activo",
           producto_plan: productoPlan,
-          cliente: clienteUuid ?? userId,
+          // POST /poliza resuelve el cliente con findClientById(idCliente) y lo
+          // contrasta con el dueño del pago: aquí va el id de cliente, nunca el
+          // uuid del usuario.
+          cliente: idCliente,
         },
       });
 
-      // Higiene PCI (Fase 7): no retener datos sensibles de tarjeta en memoria.
+      // Higiene PCI: no retener datos sensibles de tarjeta en memoria.
       setCreditCardNumber("");
       setCvv("");
       setSubmitted(false);
@@ -135,8 +161,26 @@ const TarjetaNacionalProcessor = ({
       setSuccessMessage(
         "Pago con tarjeta nacional aprobado y poliza creada correctamente.",
       );
-    } catch {
-      setError("No se pudo procesar el pago con tarjeta nacional.");
+    } catch (err) {
+      // El backend distingue rechazo del emisor, doble cargo (409), exceso de
+      // intentos (429) y pasarela caída (503): ese mensaje es el que importa.
+      if (err instanceof PagoCobradoSinPolizaError) {
+        setCreditCardNumber("");
+        setCvv("");
+      }
+
+      const mensaje = getApiErrorMessage(
+        err,
+        "No se pudo procesar el pago con tarjeta nacional.",
+      );
+
+      // 409/429/502/503 dejan el cobro en estado incierto: reintentar a ciegas
+      // es justo lo que puede acabar en un doble cargo.
+      setError(
+        esErrorDeCobroIncierto(err)
+          ? `${mensaje} Verifica el estado de tu tarjeta antes de volver a intentarlo.`
+          : mensaje,
+      );
     } finally {
       setLoading(false);
     }
@@ -145,8 +189,8 @@ const TarjetaNacionalProcessor = ({
   return (
     <div className="space-y-4 animate-fadeIn">
       <div className="bg-blue-50 text-blue-800 text-sm p-3 rounded-lg mb-4">
-        Procesado por tarjeta nacional (/tdc-nacional). Se crea la poliza al
-        aprobarse.
+        Procesado por tarjeta nacional (/tdc-nacional). Se cobra en bolívares a
+        la tasa oficial del BCV y se crea la poliza al aprobarse.
       </div>
 
       <form
@@ -233,8 +277,32 @@ const TarjetaNacionalProcessor = ({
           </div>
         </div>
 
-        <div className="text-xs text-gray-500">Monto a procesar: ${amount}</div>
+        <div className="text-xs text-gray-500">
+          {tasaLoading && "Consultando la tasa del BCV..."}
+          {!tasaLoading && montoBs !== null && (
+            <>
+              Monto a procesar:{" "}
+              <span className="font-semibold text-gray-700">
+                Bs {formatBs(montoBs)}
+              </span>{" "}
+              (${montoUsd.toFixed(2)} a tasa {tasa?.tasa})
+            </>
+          )}
+        </div>
         </fieldset>
+
+        {tasaError && (
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+            {tasaError}
+          </p>
+        )}
+
+        {tasa?.desactualizada && (
+          <p className="text-xs text-amber-700">
+            La tasa mostrada es la ultima disponible; podria no estar
+            actualizada.
+          </p>
+        )}
 
         {error && (
           <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">

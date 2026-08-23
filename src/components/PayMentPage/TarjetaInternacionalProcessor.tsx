@@ -6,6 +6,7 @@ import {
 } from "../../api/payment";
 import { intlRules, validate } from "../../validation/payments";
 import { getUserIdFromToken } from "../../utils/auth";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { useSelectedPlan, type SelectedPlan } from "../../hook/useSelectedPlan";
 
 type TarjetaInternacionalProcessorProps = {
@@ -17,8 +18,11 @@ type TarjetaInternacionalProcessorProps = {
 // Idempotencia (Fase 6.3): un externalId estable por intento de compra.
 // Se reutiliza mientras dure la sesión del mismo plan para que reintentar
 // el mismo carrito no genere órdenes duplicadas en el backend.
+const externalIdKey = (plan: SelectedPlan | null) =>
+  `intl_externalId_${plan?.id ?? "x"}`;
+
 const getStableExternalId = (plan: SelectedPlan | null): string => {
-  const key = `intl_externalId_${plan?.id ?? "x"}`;
+  const key = externalIdKey(plan);
   let value = sessionStorage.getItem(key);
   if (!value) {
     value = `TKD-${plan?.id ?? 0}-${Date.now()}`;
@@ -27,12 +31,23 @@ const getStableExternalId = (plan: SelectedPlan | null): string => {
   return value;
 };
 
+/**
+ * Cierra el intento actual liberando el externalId.
+ *
+ * El backend reutiliza cualquier orden con ese externalId cuyo estado no sea
+ * EXPIRED, así que conservarlo tras cerrar el intento impedía volver a comprar
+ * el mismo plan: devolvía la orden vieja (ya pagada o rechazada) en lugar de
+ * crear una nueva.
+ */
+const clearExternalId = (plan: SelectedPlan | null): void => {
+  sessionStorage.removeItem(externalIdKey(plan));
+};
+
 const TarjetaInternacionalProcessor = ({
   formId,
   onFormValidityChange,
   onSubmittingChange,
 }: TarjetaInternacionalProcessorProps) => {
-  const [monto, setMonto] = useState("");
   const [descripcion, setDescripcion] = useState(
     "Pago de poliza internacional",
   );
@@ -50,11 +65,16 @@ const TarjetaInternacionalProcessor = ({
     [selectedPlan],
   );
 
-  useEffect(() => {
-    if (selectedPlan && !monto) {
-      setMonto(String(Number((selectedPlan.price * 1.16).toFixed(2))));
-    }
-  }, [selectedPlan, monto]);
+  // El monto se deriva del plan y no es editable: antes era un input libre y
+  // el usuario podía cambiar 18.56 por 1.00 (el backend acepta cualquier
+  // monto > 0 al crear la orden).
+  const monto = useMemo(
+    () =>
+      selectedPlan
+        ? String(Number((selectedPlan.price * 1.16).toFixed(2)))
+        : "",
+    [selectedPlan],
+  );
 
   const values = useMemo(
     () => ({
@@ -123,11 +143,16 @@ const TarjetaInternacionalProcessor = ({
         externalId,
       });
 
-      const hostedUrl = apiResponse?.url ?? apiResponse?.CallbackUrl;
-      const ordenID = apiResponse?.ordenID ?? apiResponse?.idPago;
+      // La orden viaja dentro de `data` (TdcPayResponse), no en la raíz.
+      const hostedUrl = apiResponse?.data?.url;
+      const ordenID = apiResponse?.data?.ordenID;
 
       if (!hostedUrl) {
-        setError("La pasarela no devolvió URL de pago. Intenta de nuevo.");
+        setError(
+          apiResponse?.message ??
+            "La pasarela no devolvió URL de pago. Intenta de nuevo.",
+        );
+        setLoading(false);
         return;
       }
 
@@ -136,10 +161,16 @@ const TarjetaInternacionalProcessor = ({
       sessionStorage.setItem("intl_ordenID", String(ordenID ?? ""));
       sessionStorage.setItem("intl_externalId", externalId);
 
+      // El intento queda cerrado: al volver de la pasarela, comprar otra vez
+      // debe generar una orden nueva y no reutilizar ésta.
+      clearExternalId(selectedPlan);
+
       // Redirige el navegador al formulario alojado de Bancamiga (3DS).
       window.location.assign(hostedUrl);
-    } catch {
-      setError("No se pudo procesar el pago internacional.");
+    } catch (err) {
+      setError(
+        getApiErrorMessage(err, "No se pudo procesar el pago internacional."),
+      );
       setLoading(false);
     }
   };
@@ -154,14 +185,17 @@ const TarjetaInternacionalProcessor = ({
       <form id={formId} onSubmit={handleSubmit} className="space-y-4">
         <fieldset disabled={loading} className="space-y-4 border-0 p-0 m-0">
         <div>
-          <input
-            type="text"
-            inputMode="decimal"
-            placeholder="Monto"
-            className="w-full border p-3 rounded-lg"
-            value={monto}
-            onChange={(event) => setMonto(event.target.value)}
-          />
+          <label className="block text-xs text-gray-500 mb-1">
+            Monto a pagar
+          </label>
+          <div className="w-full border p-3 rounded-lg bg-gray-50 font-semibold text-gray-800">
+            ${monto || "0.00"}
+          </div>
+          {selectedPlan && (
+            <p className="text-xs text-gray-400 mt-1">
+              Plan {selectedPlan.name} (${selectedPlan.price.toFixed(2)}) + IVA
+            </p>
+          )}
           {fieldError("Monto")}
         </div>
 
