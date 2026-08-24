@@ -15,6 +15,12 @@ export const getApiErrorMessage = (
 ): string => {
   const axiosError = error as AxiosError<{
     message?: string | string[];
+    // Los filtros de pago (PaymentExceptionFilter e IntlPaymentExceptionFilter)
+    // renombran `message` a `mensaje`. Sin leerlo aquí, TODO error de
+    // /tdc-nacional y /international-pay caía al fallback genérico y el motivo
+    // real (tarjeta vencida, monto incoherente, rechazo del emisor con su
+    // código, doble cargo) nunca llegaba al usuario.
+    mensaje?: string | string[];
     error?: string;
   }>;
 
@@ -24,7 +30,7 @@ export const getApiErrorMessage = (
   }
 
   const data = axiosError?.response?.data;
-  const message = data?.message ?? data?.error;
+  const message = data?.message ?? data?.mensaje ?? data?.error;
 
   // class-validator devuelve un array de mensajes cuando falla el DTO.
   if (Array.isArray(message)) {
