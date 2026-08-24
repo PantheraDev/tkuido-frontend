@@ -7,6 +7,7 @@ import {
 import { intlRules, validate } from "../../validation/payments";
 import { getUserIdFromToken } from "../../utils/auth";
 import { getApiErrorMessage } from "../../utils/apiError";
+import { formatDate, getOneYearAfter } from "../../utils/date";
 import { useSelectedPlan, type SelectedPlan } from "../../hook/useSelectedPlan";
 
 type TarjetaInternacionalProcessorProps = {
@@ -132,6 +133,8 @@ const TarjetaInternacionalProcessor = ({
         return;
       }
 
+      const fechaInicio = formatDate(new Date());
+
       const apiResponse = await createTdcInternacional({
         idCliente,
         Monto: values.Monto,
@@ -141,6 +144,17 @@ const TarjetaInternacionalProcessor = ({
         token: values.token,
         expireMinute: 10,
         externalId,
+        // Mismos valores que usa el flujo nacional, para que la póliza salga
+        // igual sin importar el método de pago.
+        poliza: {
+          producto_plan: String(selectedPlan?.id ?? 1),
+          fechaInicio,
+          fechaFin: getOneYearAfter(fechaInicio),
+          prima: String(selectedPlan?.price ?? 0),
+          sumaAsegurada: "50000",
+          deducible: "500",
+          estado: "Activo",
+        },
       });
 
       // La orden viaja dentro de `data` (TdcPayResponse), no en la raíz.

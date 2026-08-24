@@ -51,6 +51,23 @@ export type TdcNacionalResponse = {
   mensaje_sistema: string | null;
 };
 
+/**
+ * Póliza a emitir cuando Bancamiga apruebe la orden.
+ *
+ * A diferencia de nacional y pago móvil, aquí el frontend no puede llamar a
+ * POST /poliza tras el cobro: el cliente se va a la página del banco y puede
+ * no volver. Estos datos viajan con la orden y el backend emite la póliza solo.
+ */
+export type PolizaSolicitadaPayload = {
+  producto_plan: string;
+  fechaInicio: string;
+  fechaFin: string;
+  prima: string;
+  sumaAsegurada: string;
+  deducible: string;
+  estado: string;
+};
+
 export type TdcInternacionalPayload = {
   idCliente: string;
   Monto: string;
@@ -58,6 +75,7 @@ export type TdcInternacionalPayload = {
   Dni: string;
   Name: string;
   token: string;
+  poliza?: PolizaSolicitadaPayload;
   // Opcionales (Fase 6.3): expiración de la orden e idempotencia desde el front.
   expireMinute?: number;
   externalId?: string;
