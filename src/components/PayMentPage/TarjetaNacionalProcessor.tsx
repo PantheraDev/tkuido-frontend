@@ -40,12 +40,16 @@ const TarjetaNacionalProcessor = ({
   const [submitted, setSubmitted] = useState(false);
 
   const selectedPlan = useSelectedPlan();
-  const { tasa, loading: tasaLoading, error: tasaError, aBolivares } = useTasaBcv();
+  const {
+    tasa,
+    loading: tasaLoading,
+    error: tasaError,
+    aBolivares,
+  } = useTasaBcv();
 
   // El plan está en dólares; este gateway cobra en bolívares.
   const montoUsd = useMemo(
-    () =>
-      selectedPlan ? Number((selectedPlan.price * 1.16).toFixed(2)) : 0,
+    () => (selectedPlan ? Number((selectedPlan.price * 1.16).toFixed(2)) : 0),
     [selectedPlan],
   );
   const montoBs = useMemo(
@@ -64,7 +68,15 @@ const TarjetaNacionalProcessor = ({
       ci: ci.replace(/\D/g, ""),
       reference: reference.replace(/\D/g, ""),
     }),
-    [montoBs, creditCardNumber, cvv, expirationMonth, expirationYear, ci, reference],
+    [
+      montoBs,
+      creditCardNumber,
+      cvv,
+      expirationMonth,
+      expirationYear,
+      ci,
+      reference,
+    ],
   );
 
   const errors = useMemo(() => validate(nationalRules, values), [values]);
@@ -189,8 +201,8 @@ const TarjetaNacionalProcessor = ({
   return (
     <div className="space-y-4 animate-fadeIn">
       <div className="bg-blue-50 text-blue-800 text-sm p-3 rounded-lg mb-4">
-        Procesado por tarjeta nacional (/tdc-nacional). Se cobra en bolívares a
-        la tasa oficial del BCV y se crea la poliza al aprobarse.
+        TDC Nacionales como MaterDebit, cobro en bolívares a la tasa oficial del
+        BCV.
       </div>
 
       <form
@@ -200,95 +212,95 @@ const TarjetaNacionalProcessor = ({
         autoComplete="off"
       >
         <fieldset disabled={loading} className="space-y-4 border-0 p-0 m-0">
-        <div>
-          <input
-            type="text"
-            inputMode="numeric"
-            autoComplete="off"
-            placeholder="Numero de Tarjeta"
-            className="w-full border p-3 rounded-lg"
-            value={creditCardNumber}
-            onChange={(event) => setCreditCardNumber(event.target.value)}
-          />
-          {fieldError("creditCardNumber")}
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
           <div>
             <input
               type="text"
               inputMode="numeric"
               autoComplete="off"
-              placeholder="MM"
+              placeholder="Numero de Tarjeta"
               className="w-full border p-3 rounded-lg"
-              value={expirationMonth}
-              onChange={(event) => setExpirationMonth(event.target.value)}
+              value={creditCardNumber}
+              onChange={(event) => setCreditCardNumber(event.target.value)}
             />
-            {fieldError("expirationMonth")}
+            {fieldError("creditCardNumber")}
           </div>
-          <div>
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              placeholder="YY"
-              className="w-full border p-3 rounded-lg"
-              value={expirationYear}
-              onChange={(event) => setExpirationYear(event.target.value)}
-            />
-            {fieldError("expirationYear")}
-          </div>
-          <div>
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              placeholder="CVV"
-              className="w-full border p-3 rounded-lg"
-              value={cvv}
-              onChange={(event) => setCvv(event.target.value)}
-            />
-            {fieldError("cvv")}
-          </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="CI"
-              className="w-full border p-3 rounded-lg"
-              value={ci}
-              onChange={(event) => setCi(event.target.value)}
-            />
-            {fieldError("ci")}
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="MM"
+                className="w-full border p-3 rounded-lg"
+                value={expirationMonth}
+                onChange={(event) => setExpirationMonth(event.target.value)}
+              />
+              {fieldError("expirationMonth")}
+            </div>
+            <div>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="YY"
+                className="w-full border p-3 rounded-lg"
+                value={expirationYear}
+                onChange={(event) => setExpirationYear(event.target.value)}
+              />
+              {fieldError("expirationYear")}
+            </div>
+            <div>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="CVV"
+                className="w-full border p-3 rounded-lg"
+                value={cvv}
+                onChange={(event) => setCvv(event.target.value)}
+              />
+              {fieldError("cvv")}
+            </div>
           </div>
-          <div>
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="Referencia"
-              className="w-full border p-3 rounded-lg"
-              value={reference}
-              onChange={(event) => setReference(event.target.value)}
-            />
-            {fieldError("reference")}
-          </div>
-        </div>
 
-        <div className="text-xs text-gray-500">
-          {tasaLoading && "Consultando la tasa del BCV..."}
-          {!tasaLoading && montoBs !== null && (
-            <>
-              Monto a procesar:{" "}
-              <span className="font-semibold text-gray-700">
-                Bs {formatBs(montoBs)}
-              </span>{" "}
-              (${montoUsd.toFixed(2)} a tasa {tasa?.tasa})
-            </>
-          )}
-        </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="CI"
+                className="w-full border p-3 rounded-lg"
+                value={ci}
+                onChange={(event) => setCi(event.target.value)}
+              />
+              {fieldError("ci")}
+            </div>
+            <div>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Referencia"
+                className="w-full border p-3 rounded-lg"
+                value={reference}
+                onChange={(event) => setReference(event.target.value)}
+              />
+              {fieldError("reference")}
+            </div>
+          </div>
+
+          <div className="text-xs text-gray-500">
+            {tasaLoading && "Consultando la tasa del BCV..."}
+            {!tasaLoading && montoBs !== null && (
+              <>
+                Monto a procesar:{" "}
+                <span className="font-semibold text-gray-700">
+                  Bs {formatBs(montoBs)}
+                </span>{" "}
+                (${montoUsd.toFixed(2)} a tasa {tasa?.tasa})
+              </>
+            )}
+          </div>
         </fieldset>
 
         {tasaError && (

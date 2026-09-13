@@ -199,71 +199,72 @@ const TarjetaInternacionalProcessor = ({
   return (
     <div className="space-y-4 animate-fadeIn">
       <div className="bg-purple-50 text-purple-800 text-sm p-3 rounded-lg mb-4">
-        Procesado por tarjeta internacional (/international-pay/tdc). Ingresarás
-        los datos de la tarjeta en la página segura de Bancamiga.
+        TDC Internacional, se registraran datos y se redigire a la pagina de
+        pago segura de Bancamiga.
       </div>
 
       <form id={formId} onSubmit={handleSubmit} className="space-y-4">
         <fieldset disabled={loading} className="space-y-4 border-0 p-0 m-0">
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">
-            Monto a pagar
-          </label>
-          <div className="w-full border p-3 rounded-lg bg-gray-50 font-semibold text-gray-800">
-            ${monto || "0.00"}
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">
+              Monto a pagar
+            </label>
+            <div className="w-full border p-3 rounded-lg bg-gray-50 font-semibold text-gray-800">
+              ${monto || "0.00"}
+            </div>
+            {selectedPlan && (
+              <p className="text-xs text-gray-400 mt-1">
+                Plan {selectedPlan.name} (${selectedPlan.price.toFixed(2)}) +
+                IVA
+              </p>
+            )}
+            {fieldError("Monto")}
           </div>
-          {selectedPlan && (
-            <p className="text-xs text-gray-400 mt-1">
-              Plan {selectedPlan.name} (${selectedPlan.price.toFixed(2)}) + IVA
-            </p>
-          )}
-          {fieldError("Monto")}
-        </div>
 
-        <div>
-          <input
-            type="text"
-            placeholder="Descripcion"
-            className="w-full border p-3 rounded-lg"
-            value={descripcion}
-            onChange={(event) => setDescripcion(event.target.value)}
-          />
-          {fieldError("Descripcion")}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
           <div>
             <input
               type="text"
-              placeholder="DNI (ej. V12345678)"
-              className="w-full border p-3 rounded-lg uppercase"
-              value={dni}
-              onChange={(event) => setDni(event.target.value.toUpperCase())}
-            />
-            {fieldError("Dni")}
-          </div>
-          <div>
-            <input
-              type="text"
-              placeholder="Nombre"
+              placeholder="Descripcion"
               className="w-full border p-3 rounded-lg"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
+              value={descripcion}
+              onChange={(event) => setDescripcion(event.target.value)}
             />
-            {fieldError("Name")}
+            {fieldError("Descripcion")}
           </div>
-        </div>
 
-        <div>
-          <input
-            type="text"
-            placeholder="Token"
-            className="w-full border p-3 rounded-lg"
-            value={token}
-            onChange={(event) => setToken(event.target.value)}
-          />
-          {fieldError("token")}
-        </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <input
+                type="text"
+                placeholder="DNI (ej. V12345678)"
+                className="w-full border p-3 rounded-lg uppercase"
+                value={dni}
+                onChange={(event) => setDni(event.target.value.toUpperCase())}
+              />
+              {fieldError("Dni")}
+            </div>
+            <div>
+              <input
+                type="text"
+                placeholder="Nombre"
+                className="w-full border p-3 rounded-lg"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+              {fieldError("Name")}
+            </div>
+          </div>
+
+          <div>
+            <input
+              type="text"
+              placeholder="Token"
+              className="w-full border p-3 rounded-lg"
+              value={token}
+              onChange={(event) => setToken(event.target.value)}
+            />
+            {fieldError("token")}
+          </div>
         </fieldset>
 
         {error && (

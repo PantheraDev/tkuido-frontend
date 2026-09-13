@@ -40,7 +40,12 @@ const PagoMovilProcessor = ({
   const [successMessage, setSuccessMessage] = useState("");
 
   const selectedPlan = useSelectedPlan();
-  const { tasa, loading: tasaLoading, error: tasaError, aBolivares } = useTasaBcv();
+  const {
+    tasa,
+    loading: tasaLoading,
+    error: tasaError,
+    aBolivares,
+  } = useTasaBcv();
 
   const montoUsd = useMemo(
     () => (selectedPlan ? Number((selectedPlan.price * 1.16).toFixed(2)) : 0),
@@ -206,93 +211,95 @@ const PagoMovilProcessor = ({
 
       <form id={formId} onSubmit={handleSubmit} className="space-y-4">
         <fieldset disabled={loading} className="space-y-4 border-0 p-0 m-0">
-        <label className="block text-sm font-bold text-gray-700">
-          Reportar Pago
-        </label>
-        <div className="grid grid-cols-2 gap-4">
-          <select
-            className="w-full border p-3 rounded-lg bg-white"
-            value={bank}
-            onChange={(event) => setBank(event.target.value)}
-          >
-            <option value="0105">(0105)- Banco Mercantil</option>
-            <option value="0134">(0134)- Banesco</option>
-            <option value="0102">(0102)- Banco de Venezuela</option>
-            <option value="0104">(0104)- Banco Venezolano de Crédito</option>
-            <option value="0108">(0108)- BBVA Provincial</option>
-            <option value="0114">(0114)- Bancaribe</option>
-            <option value="0115">(0115)- Banco Exterior</option>
-            <option value="0116">
-              (0116)- Banco Occidental de Descuento (BOD)
-            </option>
-            <option value="0128">(0128)- Banco Caroní</option>
-            <option value="0137">(0137)- Banco Sofitasa</option>
-            <option value="0138">(0138)- Banco Plaza</option>
-            <option value="0146">(0146)- Bangente</option>
-            <option value="0151">(0151)- BFC Banco Fondo Común</option>
-            <option value="0156">(0156)- 100% Banco</option>
-            <option value="0157">(0157)- Del Sur</option>
-            <option value="0163">(0163)- Banco del Tesoro</option>
-            <option value="0166">(0166)- Banco Agrícola de Venezuela</option>
-            <option value="0168">(0168)- Bancrecer</option>
-            <option value="0169">(0169)- Mi Banco</option>
-            <option value="0171">(0171)- Banco Activo</option>
-            <option value="0172">(0172)- Bancamiga</option>
-            <option value="0173">
-              (0173)- Banco Internacional de Desarrollo
-            </option>
-            <option value="0174">(0174)- Banplus</option>
-            <option value="0175">
-              (0175)- Banco Bicentenario / Banco Digital de los Trabajadores
-            </option>
-            <option value="0177">(0177)- BANFANB (Fuerza Armada)</option>
-            <option value="0191">(0191)- BNC Nacional de Crédito</option>
-          </select>
+          <label className="block text-sm font-bold text-gray-700">
+            Reportar Pago
+          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <select
+              className="w-full border p-3 rounded-lg bg-white"
+              value={bank}
+              onChange={(event) => setBank(event.target.value)}
+            >
+              <option value="0105">(0105)- Banco Mercantil</option>
+              <option value="0134">(0134)- Banesco</option>
+              <option value="0102">(0102)- Banco de Venezuela</option>
+              <option value="0104">(0104)- Banco Venezolano de Crédito</option>
+              <option value="0108">(0108)- BBVA Provincial</option>
+              <option value="0114">(0114)- Bancaribe</option>
+              <option value="0115">(0115)- Banco Exterior</option>
+              <option value="0116">
+                (0116)- Banco Occidental de Descuento (BOD)
+              </option>
+              <option value="0128">(0128)- Banco Caroní</option>
+              <option value="0137">(0137)- Banco Sofitasa</option>
+              <option value="0138">(0138)- Banco Plaza</option>
+              <option value="0146">(0146)- Bangente</option>
+              <option value="0151">(0151)- BFC Banco Fondo Común</option>
+              <option value="0156">(0156)- 100% Banco</option>
+              <option value="0157">(0157)- Del Sur</option>
+              <option value="0163">(0163)- Banco del Tesoro</option>
+              <option value="0166">(0166)- Banco Agrícola de Venezuela</option>
+              <option value="0168">(0168)- Bancrecer</option>
+              <option value="0169">(0169)- Mi Banco</option>
+              <option value="0171">(0171)- Banco Activo</option>
+              <option value="0172">(0172)- Bancamiga</option>
+              <option value="0173">
+                (0173)- Banco Internacional de Desarrollo
+              </option>
+              <option value="0174">(0174)- Banplus</option>
+              <option value="0175">
+                (0175)- Banco Bicentenario / Banco Digital de los Trabajadores
+              </option>
+              <option value="0177">(0177)- BANFANB (Fuerza Armada)</option>
+              <option value="0191">(0191)- BNC Nacional de Crédito</option>
+            </select>
+
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="Número de Referencia (6 dígitos)"
+              className="w-full border p-3 rounded-lg"
+              value={reference}
+              onChange={(event) => setReference(event.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <select
+              className="w-full border p-3 rounded-lg bg-white"
+              value={phonePrefix}
+              onChange={(event) => setPhonePrefix(event.target.value)}
+            >
+              <option value="58414">0414</option>
+              <option value="58424">0424</option>
+              <option value="58416">0416</option>
+              <option value="58426">0426</option>
+              <option value="58412">0412</option>
+              <option value="58422">0422</option>
+            </select>
+
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={7}
+              placeholder="Número de Teléfono (7 dígitos)"
+              className="w-full border p-3 rounded-lg"
+              value={phoneNumber}
+              onChange={(event) =>
+                setPhoneNumber(
+                  event.target.value.replace(/\D/g, "").slice(0, 7),
+                )
+              }
+            />
+          </div>
 
           <input
-            type="text"
-            inputMode="numeric"
-            placeholder="Numero de Referencia"
+            type="date"
+            max={hoy}
             className="w-full border p-3 rounded-lg"
-            value={reference}
-            onChange={(event) => setReference(event.target.value)}
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
           />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <select
-            className="w-full border p-3 rounded-lg bg-white"
-            value={phonePrefix}
-            onChange={(event) => setPhonePrefix(event.target.value)}
-          >
-            <option value="58414">0414</option>
-            <option value="58424">0424</option>
-            <option value="58416">0416</option>
-            <option value="58426">0426</option>
-            <option value="58412">0412</option>
-            <option value="58422">0422</option>
-          </select>
-
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={7}
-            placeholder="Número de Teléfono (7 dígitos)"
-            className="w-full border p-3 rounded-lg"
-            value={phoneNumber}
-            onChange={(event) =>
-              setPhoneNumber(event.target.value.replace(/\D/g, "").slice(0, 7))
-            }
-          />
-        </div>
-
-        <input
-          type="date"
-          max={hoy}
-          className="w-full border p-3 rounded-lg"
-          value={date}
-          onChange={(event) => setDate(event.target.value)}
-        />
         </fieldset>
 
         {selectedPlan && (

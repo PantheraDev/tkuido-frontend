@@ -1,4 +1,4 @@
-import Button from "./Button";
+//import Button from "./Button";
 
 type ServiceCardProps = {
   title: string;
@@ -20,7 +20,7 @@ const ServiceCard = ({ title, description, call, img }: ServiceCardProps) => {
           <p className="resp-p text-white mt-3">{description}</p>
         </div>
         <div className="w-full flex flex-col gap-0 md:flex-none md:w-auto">
-          <Button text="Ver más" />
+          {/*<Button text="Ver más" />*/}
         </div>
         <img
           src={img}
